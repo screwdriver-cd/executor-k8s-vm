@@ -11,7 +11,6 @@ metadata:
   name: {{build_id_with_prefix}}
   container: {{container}}
   launchVersion: {{launcher_version}}
-  serviceAccount: {{service_account}}
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_id}}"
 `;
@@ -30,7 +29,6 @@ describe('index', function () {
     const testStoreUri = 'http://store:8080';
     const testContainer = 'node:4';
     const testLaunchVersion = 'stable';
-    const testServiceAccount = 'default';
     const podsUrl = 'https://kubernetes.default/api/v1/namespaces/default/pods';
 
     before(() => {
@@ -44,13 +42,15 @@ describe('index', function () {
         requestMock = sinon.stub();
 
         fsMock = {
-            readFileSync: sinon.stub()
+            readFileSync: sinon.stub(),
+            existsSync: sinon.stub()
         };
 
         fsMock.readFileSync.withArgs('/var/run/secrets/kubernetes.io/serviceaccount/token')
             .returns('api_key');
         fsMock.readFileSync.withArgs(sinon.match(/config\/pod.yaml.tim/))
             .returns(TEST_TIM_YAML);
+        fsMock.existsSync.returns(true);
 
         mockery.registerMock('fs', fsMock);
         mockery.registerMock('request', requestMock);
@@ -80,15 +80,14 @@ describe('index', function () {
 
     it('supports specifying a specific version', () => {
         assert.equal(executor.launchVersion, 'stable');
-        assert.equal(executor.serviceAccount, 'default');
         assert.equal(executor.token, 'api_key');
         assert.equal(executor.host, 'kubernetes.default');
         executor = new Executor({
             kubernetes: {
                 token: 'api_key2',
                 host: 'kubernetes2',
-                serviceAccount: 'foobar',
-                jobsNamespace: 'baz'
+                jobsNamespace: 'baz',
+                baseImage: 'hyperctl'
             },
             prefix: 'beta_',
             launchVersion: 'v1.2.3'
@@ -97,18 +96,18 @@ describe('index', function () {
         assert.equal(executor.token, 'api_key2');
         assert.equal(executor.host, 'kubernetes2');
         assert.equal(executor.launchVersion, 'v1.2.3');
-        assert.equal(executor.serviceAccount, 'foobar');
         assert.equal(executor.jobsNamespace, 'baz');
+        assert.equal(executor.baseImage, 'hyperctl');
     });
 
     it('allow empty options', () => {
+        fsMock.existsSync.returns(false);
         executor = new Executor();
         assert.equal(executor.launchVersion, 'stable');
-        assert.equal(executor.serviceAccount, 'default');
-        assert.equal(executor.token, 'api_key');
         assert.equal(executor.host, 'kubernetes.default');
         assert.equal(executor.launchVersion, 'stable');
         assert.equal(executor.prefix, '');
+        assert.equal(executor.token, '');
     });
 
     it('extends base class', () => {
@@ -224,8 +223,7 @@ describe('index', function () {
                     metadata: {
                         name: 'beta_15',
                         container: testContainer,
-                        launchVersion: testLaunchVersion,
-                        serviceAccount: testServiceAccount
+                        launchVersion: testLaunchVersion
                     },
                     command: [
                         '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
