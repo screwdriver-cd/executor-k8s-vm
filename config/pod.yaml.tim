@@ -4,52 +4,62 @@ metadata:
   name: "{{build_id_with_prefix}}"
   labels:
     sdbuild: "{{build_id_with_prefix}}"
-    app: screwdriver
+    app: screwdriver-vm
     tier: builds
   annotations:
-    pod.alpha.kubernetes.io/init-containers: '[
-      {
-        "name": "launcher",
-        "image": "screwdrivercd/launcher:{{launcher_version}}",
-        "command": ["/bin/sh", "-c", "cp -a /opt/sd/* /opt/launcher"],
-        "volumeMounts": [
-          {
-            "name": "screwdriver",
-            "mountPath": "/opt/launcher"
-          }
-        ]
-      }
-    ]'
+   pod.alpha.kubernetes.io/init-containers: '[
+     {
+       "name": "launcher",
+       "image": "screwdrivercd/launcher:{{launcher_version}}",
+       "command": ["/bin/sh", "-c", "cp -a /opt/sd/* /opt/launcher"],
+       "volumeMounts": [
+         {
+           "name": "sdlauncher",
+           "mountPath": "/opt/launcher"
+         }
+       ]
+     }
+  ]'
 spec:
-  serviceAccount: {{service_account}}
   restartPolicy: Never
   containers:
-  - name: build
-    image: {{container}}
+  - name: vm-launcher
+    image: {{base_image}}
+    imagePullPolicy: Always
+    securityContext:
+      privileged: true
     resources:
       limits:
         memory: 2Gi
-    command:
-    - "/opt/sd/tini"
-    - "--"
-    - "/bin/sh"
-    - "-c"
-    # Run the launcher and logservice in the background
-    # Wait for both background jobs to complete
-    - |
-      /opt/sd/launch --api-uri {{api_uri}} --emitter /opt/sd/emitter {{build_id}} &
-      /opt/sd/logservice --emitter /opt/sd/emitter --api-uri {{store_uri}} --build {{build_id}} &
-      wait $(jobs -p)
+    command: ["/sd/hyper-runner.sh"]
+    args: [
+         "--container", "{{container}}",
+         "--api_uri", "{{api_uri}}",
+         "--store_uri", "{{store_uri}}",
+         "--build_id", "{{build_id}}",
+         "--id_with_prefix", "{{build_id_with_prefix}}",
+         "--build_token", "{{token}}"
+          ]
     volumeMounts:
-    - mountPath: /opt/sd
-      name: screwdriver
-    - mountPath: /sd
-      name: workspace
-    env:
-    - name: SD_TOKEN
-      value: "{{token}}"
+    - mountPath: /var/run
+      name: hyper-socket
+    - mountPath: /var/sd-workspaces
+      name: sd-workspaces
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/bash", "-c", "sleep 2; # This sleep is to wait for hyper to gracefully exit normally on successful build
+                    rm -rf /var/sd-workspaces/{{build_id_with_prefix}};
+                    hyperctl rm builder-{{build_id_with_prefix}}"]
   volumes:
-    - name: screwdriver
-      emptyDir: {}
-    - name: workspace
-      emptyDir: {}
+    - name: hyper-socket
+      hostPath:
+        path: /var/run
+
+    - name: sd-workspaces
+      hostPath:
+        path: /opt/screwdriver
+
+    - name: sdlauncher
+      hostPath:
+        path: /opt/screwdriver/{{build_id_with_prefix}}/sdlauncher

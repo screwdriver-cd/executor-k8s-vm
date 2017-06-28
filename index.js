@@ -8,7 +8,7 @@ const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const fs = require('fs');
 
-class K8sExecutor extends Executor {
+class K8sVMExecutor extends Executor {
     /**
      * Constructor
      * @method constructor
@@ -19,8 +19,8 @@ class K8sExecutor extends Executor {
      * @param  {Object} options.kubernetes                           Kubernetes configuration
      * @param  {String} [options.kubernetes.token]                   API Token (loaded from /var/run/secrets/kubernetes.io/serviceaccount/token if not provided)
      * @param  {String} [options.kubernetes.host=kubernetes.default] Kubernetes hostname
-     * @param  {String} [options.kubernetes.serviceAccount=default]  Service Account for builds
      * @param  {String} [options.kubernetes.jobsNamespace=default]   Pods namespace for Screwdriver Jobs
+     * @param  {String} [options.kubernetes.baseImage]               Base image for the pod
      * @param  {String} [options.launchVersion=stable]               Launcher container version to use
      * @param  {String} [options.prefix='']                          Prefix for job name
      * @param  {String} [options.fusebox]                            Options for the circuit breaker (https://github.com/screwdriver-cd/circuit-fuses)
@@ -30,13 +30,19 @@ class K8sExecutor extends Executor {
 
         this.kubernetes = options.kubernetes || {};
         this.ecosystem = options.ecosystem;
-        this.token = this.kubernetes.token ||
-            fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token').toString();
+
+        if (this.kubernetes.token) {
+            this.token = this.kubernetes.token;
+        } else {
+            const filepath = '/var/run/secrets/kubernetes.io/serviceaccount/token';
+
+            this.token = fs.existsSync(filepath) ? fs.readFileSync(filepath) : '';
+        }
         this.host = this.kubernetes.host || 'kubernetes.default';
         this.launchVersion = options.launchVersion || 'stable';
         this.prefix = options.prefix || '';
-        this.serviceAccount = this.kubernetes.serviceAccount || 'default';
         this.jobsNamespace = this.kubernetes.jobsNamespace || 'default';
+        this.baseImage = this.kubernetes.baseImage;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(request, options.fusebox);
     }
@@ -59,7 +65,7 @@ class K8sExecutor extends Executor {
             store_uri: this.ecosystem.store,
             token: config.token,
             launcher_version: this.launchVersion,
-            service_account: this.serviceAccount
+            base_image: this.baseImage
         });
 
         const options = {
@@ -122,4 +128,4 @@ class K8sExecutor extends Executor {
     }
 }
 
-module.exports = K8sExecutor;
+module.exports = K8sVMExecutor;

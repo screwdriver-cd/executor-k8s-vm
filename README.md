@@ -9,6 +9,26 @@
 npm install screwdriver-executor-k8s-vm
 ```
 
+### Initialization
+The class provides a couple options that are configurable in the instantiation of this Executor
+
+| Parameter        | Type  | Default    | Description |
+| :-------------   | :---- | :----------| :-----------|
+| config        | Object | | Configuration Object |
+| config.kubernetes | Object | {} | Kubernetes configuration Object |
+| config.kubernetes.token | String | '' | The JWT token used for authenticating to the Kubernetes cluster. (If not passed in, we will read from `/var/run/secrets/kubernetes.io/serviceaccount/token`.) |
+| config.kubernetes.host | String | 'kubernetes.defaults' | The hostname for the Kubernetes cluster (kubernetes) |
+| config.ecosystem | Object | | Screwdriver Ecosystem (ui, api, store, etc.) |
+| config.launchVersion | String | 'stable' | Launcher container version to use (stable) |
+| config.prefix | String | '' |Prefix to container names ("") |
+| config.jobsNamespace | String | 'default' | Kubernetes namespace where builds are running on |
+| config.baseImage | String | '' | Base image used to start the VM |
+
+
+### Methods
+
+For more information on `start`, `stop`, and `stats` please see the [executor-base-class].
+
 ## Testing
 
 ```bash
@@ -25,7 +45,7 @@ Code licensed under the BSD 3-Clause license. See LICENSE file for terms.
 [license-image]: https://img.shields.io/npm/l/screwdriver-executor-k8s-vm.svg
 [issues-image]: https://img.shields.io/github/issues/screwdriver-cd/executor-k8s-vm.svg
 [issues-url]: https://github.com/screwdriver-cd/executor-k8s-vm/issues
-[status-image]: https://cd.screwdriver.cd/pipelines/pipelineid/badge
-[status-url]: https://cd.screwdriver.cd/pipelines/pipelineid
+[status-image]: https://cd.screwdriver.cd/pipelines/235/badge
+[status-url]: https://cd.screwdriver.cd/pipelines/235
 [daviddm-image]: https://david-dm.org/screwdriver-cd/executor-k8s-vm.svg?theme=shields.io
 [daviddm-url]: https://david-dm.org/screwdriver-cd/executor-k8s-vm
