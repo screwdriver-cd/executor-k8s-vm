@@ -48,7 +48,7 @@ spec:
     lifecycle:
       preStop:
         exec:
-          command: ["/bin/bash", "-c", "sleep 2; # This sleep is to wait for hyper to gracefully exit normally on successful build
+          command: ["/bin/bash", "-c", "sleep 2;
                     rm -rf /var/sd-workspaces/{{build_id_with_prefix}};
                     hyperctl rm builder-{{build_id_with_prefix}}"]
   volumes:
