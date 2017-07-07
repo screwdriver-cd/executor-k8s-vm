@@ -45,6 +45,8 @@ spec:
       name: hyper-socket
     - mountPath: /var/sd-workspaces
       name: sd-workspaces
+    - mountPath: /opt/sd
+      name: sdlauncher
     lifecycle:
       preStop:
         exec:
