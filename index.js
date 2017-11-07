@@ -72,9 +72,7 @@ class K8sVMExecutor extends Executor {
             uri: this.podsUrl,
             method: 'POST',
             json: yaml.safeLoad(podTemplate),
-            headers: {
-                Authorization: `Bearer ${this.token}`
-            },
+            headers: { Authorization: `Bearer ${this.token}` },
             strictSSL: false
         };
 
@@ -82,6 +80,30 @@ class K8sVMExecutor extends Executor {
             .then((resp) => {
                 if (resp.statusCode !== 201) {
                     throw new Error(`Failed to create pod: ${JSON.stringify(resp.body)}`);
+                }
+
+                return resp.body.metadata.name;
+            })
+            .then(podname => new Promise(resolve => setTimeout(resolve, 3000))
+                .then(() => {
+                    const statusOptions = {
+                        uri: `${this.podsUrl}/${podname}/status`,
+                        method: 'GET',
+                        headers: { Authorization: `Bearer ${this.token}` },
+                        strictSSL: false
+                    };
+
+                    return this.breaker.runCommand(statusOptions);
+                }))
+            .then((resp) => {
+                if (resp.statusCode !== 200) {
+                    throw new Error(`Failed to get pod status: ${JSON.stringify(resp.body)}`);
+                }
+
+                const status = resp.body.status.phase.toLowerCase();
+
+                if (status === 'failed' || status === 'unknown') {
+                    throw new Error(`Pod status is: ${JSON.stringify(resp.body)}`);
                 }
 
                 return null;

@@ -207,50 +207,72 @@ describe('index', function () {
         const fakeStartResponse = {
             statusCode: 201,
             body: {
+                metadata: {
+                    name: 'testpod'
+                },
                 success: true
             }
         };
+        const fakeGetResponse = {
+            statusCode: 200,
+            body: {
+                status: {
+                    phase: 'running'
+                }
+            }
+        };
+        const postConfig = {
+            uri: podsUrl,
+            method: 'POST',
+            json: {
+                metadata: {
+                    name: 'beta_15',
+                    container: testContainer,
+                    launchVersion: testLaunchVersion
+                },
+                command: [
+                    '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                    + '15'
+                ]
+            },
+            headers: {
+                Authorization: 'Bearer api_key'
+            },
+            strictSSL: false
+        };
+        const getConfig = {
+            uri: `${podsUrl}/testpod/status`,
+            method: 'GET',
+            headers: {
+                Authorization: 'Bearer api_key'
+            },
+            strictSSL: false
+        };
 
         beforeEach(() => {
-            requestMock.yieldsAsync(null, fakeStartResponse, fakeStartResponse.body);
+            requestMock.withArgs(postConfig).yieldsAsync(
+                null, fakeStartResponse, fakeStartResponse.body);
+            requestMock.withArgs(getConfig).yieldsAsync(
+                null, fakeGetResponse, fakeGetResponse.body);
         });
 
-        it('successfully calls start', () => {
-            const postConfig = {
-                uri: podsUrl,
-                method: 'POST',
-                json: {
-                    metadata: {
-                        name: 'beta_15',
-                        container: testContainer,
-                        launchVersion: testLaunchVersion
-                    },
-                    command: [
-                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
-                        + '15'
-                    ]
-                },
-                headers: {
-                    Authorization: 'Bearer api_key'
-                },
-                strictSSL: false
-            };
-
-            return executor.start({
+        it('successfully calls start', () =>
+            executor.start({
                 buildId: testBuildId,
                 container: testContainer,
                 token: testToken,
                 apiUri: testApiUri
             }).then(() => {
-                assert.calledOnce(requestMock);
-                assert.calledWith(requestMock, postConfig);
-            });
-        });
+                assert.calledTwice(requestMock);
+                assert.calledWith(requestMock.firstCall, postConfig);
+                assert.calledWith(requestMock.secondCall, getConfig);
+            })
+        );
 
         it('returns error when request responds with error', () => {
             const error = new Error('lol');
 
-            requestMock.yieldsAsync(error);
+            requestMock.withArgs(postConfig).yieldsAsync(error);
 
             return executor.start({
                 buildId: testBuildId,
@@ -264,6 +286,57 @@ describe('index', function () {
             });
         });
 
+        it('returns error when not able to get pod status', () => {
+            const returnResponse = {
+                statusCode: 500,
+                body: {
+                    statusCode: 500,
+                    message: 'cannot get pod status'
+                }
+            };
+            const returnMessage =
+                `Failed to get pod status: ${JSON.stringify(returnResponse.body)}`;
+
+            requestMock.withArgs(getConfig).yieldsAsync(null, returnResponse, returnResponse.body);
+
+            return executor.start({
+                buildId: testBuildId,
+                container: testContainer,
+                token: testToken,
+                apiUri: testApiUri
+            }).then(() => {
+                throw new Error('did not fail');
+            }, (err) => {
+                assert.equal(err.message, returnMessage);
+            });
+        });
+
+        it('returns error when pod status is failed', () => {
+            const returnResponse = {
+                statusCode: 200,
+                body: {
+                    status: {
+                        phase: 'failed'
+                    }
+                }
+            };
+            const returnMessage =
+                `Pod status is: ${JSON.stringify(returnResponse.body)}`;
+
+            requestMock.withArgs(getConfig).yieldsAsync(null, returnResponse, returnResponse.body);
+
+            return executor.start({
+                buildId: testBuildId,
+                container: testContainer,
+                token: testToken,
+                apiUri: testApiUri
+            }).then(() => {
+                throw new Error('did not fail');
+            }, (err) => {
+                assert.equal(err.message, returnMessage);
+            });
+        });
+
         it('returns body when request responds with error in response', () => {
             const returnResponse = {
                 statusCode: 500,
@@ -274,7 +347,7 @@ describe('index', function () {
             };
             const returnMessage = `Failed to create pod: ${JSON.stringify(returnResponse.body)}`;
 
-            requestMock.yieldsAsync(null, returnResponse, returnResponse.body);
+            requestMock.withArgs(postConfig).yieldsAsync(null, returnResponse, returnResponse.body);
 
             return executor.start({
                 buildId: testBuildId,
