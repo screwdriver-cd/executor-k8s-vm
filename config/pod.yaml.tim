@@ -21,6 +21,16 @@ metadata:
      }
   ]'
 spec:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - screwdriver-vm
+        topologyKey: kubernetes.io/hostname
   restartPolicy: Never
   containers:
   - name: vm-launcher
