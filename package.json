@@ -51,7 +51,7 @@
     "dependencies": {
         "circuit-fuses": "^2.1.0",
         "js-yaml": "^3.6.1",
-        "request": "^2.72.0",
+        "requestretry": "^1.12.2",
         "screwdriver-executor-base": "^5.2.0",
         "tinytim": "^0.1.1"
     }

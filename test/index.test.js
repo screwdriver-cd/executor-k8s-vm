@@ -14,13 +14,15 @@ metadata:
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_id}}"
 `;
+const MAXATTEMPTS = 3;
+const RETRYDELAY = 3000;
 
 describe('index', function () {
     // Time not important. Only life important.
     this.timeout(5000);
 
     let Executor;
-    let requestMock;
+    let requestRetryMock;
     let fsMock;
     let executor;
     const testBuildId = 15;
@@ -39,7 +41,8 @@ describe('index', function () {
     });
 
     beforeEach(() => {
-        requestMock = sinon.stub();
+        requestRetryMock = sinon.stub();
+        requestRetryMock = sinon.stub();
 
         fsMock = {
             readFileSync: sinon.stub(),
@@ -53,7 +56,8 @@ describe('index', function () {
         fsMock.existsSync.returns(true);
 
         mockery.registerMock('fs', fsMock);
-        mockery.registerMock('request', requestMock);
+        mockery.registerMock('request', requestRetryMock);
+        mockery.registerMock('requestretry', requestRetryMock);
 
         /* eslint-disable global-require */
         Executor = require('../index');
@@ -153,22 +157,22 @@ describe('index', function () {
         };
 
         beforeEach(() => {
-            requestMock.yieldsAsync(null, fakeStopResponse, fakeStopResponse.body);
+            requestRetryMock.yieldsAsync(null, fakeStopResponse, fakeStopResponse.body);
         });
 
         it('calls breaker with correct config', () => (
             executor.stop({
                 buildId: testBuildId
             }).then(() => {
-                assert.calledWith(requestMock, deleteConfig);
-                assert.calledOnce(requestMock);
+                assert.calledWith(requestRetryMock, deleteConfig);
+                assert.calledOnce(requestRetryMock);
             })
         ));
 
         it('returns error when breaker does', () => {
             const error = new Error('error');
 
-            requestMock.yieldsAsync(error);
+            requestRetryMock.yieldsAsync(error);
 
             return executor.stop({
                 buildId: testBuildId
@@ -176,7 +180,7 @@ describe('index', function () {
                 throw new Error('did not fail');
             }, (err) => {
                 assert.deepEqual(err, error);
-                assert.equal(requestMock.callCount, 5);
+                assert.equal(requestRetryMock.callCount, 5);
             });
         });
 
@@ -191,7 +195,7 @@ describe('index', function () {
             const returnMessage = 'Failed to delete pod: '
                   + `${JSON.stringify(fakeStopErrorResponse.body)}`;
 
-            requestMock.yieldsAsync(null, fakeStopErrorResponse, fakeStopErrorResponse.body);
+            requestRetryMock.yieldsAsync(null, fakeStopErrorResponse, fakeStopErrorResponse.body);
 
             return executor.stop({
                 buildId: testBuildId
@@ -204,6 +208,28 @@ describe('index', function () {
     });
 
     describe('start', () => {
+        const postConfig = {
+            uri: podsUrl,
+            method: 'POST',
+            body: {
+                metadata: {
+                    name: 'beta_15',
+                    container: testContainer,
+                    launchVersion: testLaunchVersion
+                },
+                command: [
+                    '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                    + '15'
+                ]
+            },
+            headers: {
+                Authorization: 'Bearer api_key'
+            },
+            strictSSL: false,
+            json: true
+        };
+        let getConfig;
+
         const fakeStartResponse = {
             statusCode: 201,
             body: {
@@ -221,38 +247,24 @@ describe('index', function () {
                 }
             }
         };
-        const postConfig = {
-            uri: podsUrl,
-            method: 'POST',
-            json: {
-                metadata: {
-                    name: 'beta_15',
-                    container: testContainer,
-                    launchVersion: testLaunchVersion
-                },
-                command: [
-                    '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
-                    + '15'
-                ]
-            },
-            headers: {
-                Authorization: 'Bearer api_key'
-            },
-            strictSSL: false
-        };
-        const getConfig = {
-            uri: `${podsUrl}/testpod/status`,
-            method: 'GET',
-            headers: {
-                Authorization: 'Bearer api_key'
-            },
-            strictSSL: false
-        };
 
         beforeEach(() => {
-            requestMock.withArgs(postConfig).yieldsAsync(
+            getConfig = {
+                uri: `${podsUrl}/testpod/status`,
+                method: 'GET',
+                headers: {
+                    Authorization: 'Bearer api_key'
+                },
+                strictSSL: false,
+                maxAttempts: MAXATTEMPTS,
+                retryDelay: RETRYDELAY,
+                // eslint-disable-next-line
+                retryStrategy: executor.podRetryStrategy
+            };
+
+            requestRetryMock.withArgs(sinon.match({ method: 'POST' })).yieldsAsync(
                 null, fakeStartResponse, fakeStartResponse.body);
-            requestMock.withArgs(getConfig).yieldsAsync(
+            requestRetryMock.withArgs(sinon.match({ method: 'GET' })).yieldsAsync(
                 null, fakeGetResponse, fakeGetResponse.body);
         });
 
@@ -263,16 +275,16 @@ describe('index', function () {
                 token: testToken,
                 apiUri: testApiUri
             }).then(() => {
-                assert.calledTwice(requestMock);
-                assert.calledWith(requestMock.firstCall, postConfig);
-                assert.calledWith(requestMock.secondCall, getConfig);
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
             })
         );
 
         it('returns error when request responds with error', () => {
             const error = new Error('lol');
 
-            requestMock.withArgs(postConfig).yieldsAsync(error);
+            requestRetryMock.withArgs(postConfig).yieldsAsync(error);
 
             return executor.start({
                 buildId: testBuildId,
@@ -297,7 +309,8 @@ describe('index', function () {
             const returnMessage =
                 `Failed to get pod status: ${JSON.stringify(returnResponse.body)}`;
 
-            requestMock.withArgs(getConfig).yieldsAsync(null, returnResponse, returnResponse.body);
+            requestRetryMock.withArgs(getConfig).yieldsAsync(
+                null, returnResponse, returnResponse.body);
 
             return executor.start({
                 buildId: testBuildId,
@@ -321,9 +334,10 @@ describe('index', function () {
                 }
             };
             const returnMessage =
-                `Pod status is: ${JSON.stringify(returnResponse.body)}`;
+                `Failed to create pod. Pod status is: ${JSON.stringify(returnResponse.body)}`;
 
-            requestMock.withArgs(getConfig).yieldsAsync(null, returnResponse, returnResponse.body);
+            requestRetryMock.withArgs(getConfig).yieldsAsync(
+                null, returnResponse, returnResponse.body);
 
             return executor.start({
                 buildId: testBuildId,
@@ -347,7 +361,8 @@ describe('index', function () {
             };
             const returnMessage = `Failed to create pod: ${JSON.stringify(returnResponse.body)}`;
 
-            requestMock.withArgs(postConfig).yieldsAsync(null, returnResponse, returnResponse.body);
+            requestRetryMock.withArgs(postConfig).yieldsAsync(
+                null, returnResponse, returnResponse.body);
 
             return executor.start({
                 buildId: testBuildId,
