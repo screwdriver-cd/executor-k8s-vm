@@ -8,6 +8,8 @@ sinon.assert.expose(assert, { prefix: '' });
 
 const TEST_TIM_YAML = `
 metadata:
+  cpu: {{cpu}}
+  memory: {{memory}}
   name: {{build_id_with_prefix}}
   container: {{container}}
   launchVersion: {{launcher_version}}
@@ -17,10 +19,7 @@ command:
 const MAXATTEMPTS = 3;
 const RETRYDELAY = 3000;
 
-describe('index', function () {
-    // Time not important. Only life important.
-    this.timeout(5000);
-
+describe('index', () => {
     let Executor;
     let requestRetryMock;
     let fsMock;
@@ -211,6 +210,8 @@ describe('index', function () {
             method: 'POST',
             body: {
                 metadata: {
+                    cpu: 2,
+                    memory: 2048,
                     name: 'beta_15',
                     container: testContainer,
                     launchVersion: testLaunchVersion
@@ -278,6 +279,25 @@ describe('index', function () {
                     sinon.match(getConfig));
             })
         );
+
+        it('sets the CPU and memory appropriately when resource is set to HIGH', () => {
+            postConfig.body.metadata.cpu = 6;
+            postConfig.body.metadata.memory = 12288;
+
+            return executor.start({
+                annotations: {
+                    'beta.screwdriver.cd/resource': 'HIGH'
+                },
+                buildId: testBuildId,
+                container: testContainer,
+                token: testToken,
+                apiUri: testApiUri
+            }).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
 
         it('returns error when request responds with error', () => {
             const error = new Error('lol');

@@ -43,6 +43,8 @@ spec:
         memory: 2Gi
     command: ["/sd/hyper-runner.sh"]
     args: [
+         "--cpu", "{{cpu}}",
+         "--memory", "{{memory}}",
          "--container", "{{container}}",
          "--api_uri", "{{api_uri}}",
          "--store_uri", "{{store_uri}}",
