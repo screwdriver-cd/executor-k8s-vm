@@ -4,6 +4,7 @@ const Executor = require('screwdriver-executor-base');
 const path = require('path');
 const Fusebox = require('circuit-fuses');
 const requestretry = require('requestretry');
+const randomstring = require('randomstring');
 const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const fs = require('fs');
@@ -64,7 +65,9 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
+        const random = randomstring.generate(5);
         const podTemplate = tinytim.renderFile(path.resolve(__dirname, './config/pod.yaml.tim'), {
+            pod_name: `${this.prefix}${config.buildId}-${random}`,
             build_id_with_prefix: `${this.prefix}${config.buildId}`,
             build_id: config.buildId,
             container: config.container,
@@ -74,7 +77,6 @@ class K8sVMExecutor extends Executor {
             launcher_version: this.launchVersion,
             base_image: this.baseImage
         });
-
         const options = {
             uri: this.podsUrl,
             method: 'POST',

@@ -42,7 +42,6 @@ describe('index', function () {
 
     beforeEach(() => {
         requestRetryMock = sinon.stub();
-        requestRetryMock = sinon.stub();
 
         fsMock = {
             readFileSync: sinon.stub(),
@@ -56,7 +55,6 @@ describe('index', function () {
         fsMock.existsSync.returns(true);
 
         mockery.registerMock('fs', fsMock);
-        mockery.registerMock('request', requestRetryMock);
         mockery.registerMock('requestretry', requestRetryMock);
 
         /* eslint-disable global-require */
