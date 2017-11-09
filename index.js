@@ -3,10 +3,13 @@
 const Executor = require('screwdriver-executor-base');
 const path = require('path');
 const Fusebox = require('circuit-fuses');
-const request = require('request');
+const requestretry = require('requestretry');
+const randomstring = require('randomstring');
 const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const fs = require('fs');
+const MAXATTEMPTS = 3;
+const RETRYDELAY = 3000;
 
 class K8sVMExecutor extends Executor {
     /**
@@ -44,7 +47,12 @@ class K8sVMExecutor extends Executor {
         this.jobsNamespace = this.kubernetes.jobsNamespace || 'default';
         this.baseImage = this.kubernetes.baseImage;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
-        this.breaker = new Fusebox(request, options.fusebox);
+        this.breaker = new Fusebox(requestretry, options.fusebox);
+        this.podRetryStrategy = (err, response, body) => {
+            const status = body.status.phase.toLowerCase();
+
+            return err || status === 'pending';
+        };
     }
 
     /**
@@ -57,7 +65,9 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
+        const random = randomstring.generate(5);
         const podTemplate = tinytim.renderFile(path.resolve(__dirname, './config/pod.yaml.tim'), {
+            pod_name: `${this.prefix}${config.buildId}-${random}`,
             build_id_with_prefix: `${this.prefix}${config.buildId}`,
             build_id: config.buildId,
             container: config.container,
@@ -67,21 +77,46 @@ class K8sVMExecutor extends Executor {
             launcher_version: this.launchVersion,
             base_image: this.baseImage
         });
-
         const options = {
             uri: this.podsUrl,
             method: 'POST',
-            json: yaml.safeLoad(podTemplate),
-            headers: {
-                Authorization: `Bearer ${this.token}`
-            },
-            strictSSL: false
+            body: yaml.safeLoad(podTemplate),
+            headers: { Authorization: `Bearer ${this.token}` },
+            strictSSL: false,
+            json: true
         };
 
         return this.breaker.runCommand(options)
             .then((resp) => {
                 if (resp.statusCode !== 201) {
                     throw new Error(`Failed to create pod: ${JSON.stringify(resp.body)}`);
+                }
+
+                return resp.body.metadata.name;
+            })
+            .then((podname) => {
+                const statusOptions = {
+                    uri: `${this.podsUrl}/${podname}/status`,
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${this.token}` },
+                    strictSSL: false,
+                    maxAttempts: MAXATTEMPTS,
+                    retryDelay: RETRYDELAY,
+                    retryStrategy: this.podRetryStrategy
+                };
+
+                return this.breaker.runCommand(statusOptions);
+            })
+            .then((resp) => {
+                if (resp.statusCode !== 200) {
+                    throw new Error(`Failed to get pod status: ${JSON.stringify(resp.body)}`);
+                }
+
+                const status = resp.body.status.phase.toLowerCase();
+
+                if (status === 'failed' || status === 'unknown') {
+                    throw new Error(
+                        `Failed to create pod. Pod status is: ${JSON.stringify(resp.body)}`);
                 }
 
                 return null;
