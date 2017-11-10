@@ -1,15 +1,16 @@
 'use strict';
 
-const Executor = require('screwdriver-executor-base');
-const path = require('path');
-const Fusebox = require('circuit-fuses');
-const requestretry = require('requestretry');
-const randomstring = require('randomstring');
-const tinytim = require('tinytim');
-const yaml = require('js-yaml');
-const fs = require('fs');
 const MAXATTEMPTS = 3;
 const RETRYDELAY = 3000;
+const Executor = require('screwdriver-executor-base');
+const Fusebox = require('circuit-fuses');
+const fs = require('fs');
+const hoek = require('hoek');
+const path = require('path');
+const randomstring = require('randomstring');
+const requestretry = require('requestretry');
+const tinytim = require('tinytim');
+const yaml = require('js-yaml');
 
 class K8sVMExecutor extends Executor {
     /**
@@ -49,9 +50,9 @@ class K8sVMExecutor extends Executor {
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(requestretry, options.fusebox);
         this.podRetryStrategy = (err, response, body) => {
-            const status = body.status.phase.toLowerCase();
+            const status = hoek.reach(body, 'status.phase');
 
-            return err || status === 'pending';
+            return err || !status || status.toLowerCase() === 'pending';
         };
     }
 
@@ -106,21 +107,23 @@ class K8sVMExecutor extends Executor {
                     strictSSL: false,
                     maxAttempts: MAXATTEMPTS,
                     retryDelay: RETRYDELAY,
-                    retryStrategy: this.podRetryStrategy
+                    retryStrategy: this.podRetryStrategy,
+                    json: true
                 };
 
                 return this.breaker.runCommand(statusOptions);
             })
             .then((resp) => {
                 if (resp.statusCode !== 200) {
-                    throw new Error(`Failed to get pod status: ${JSON.stringify(resp.body)}`);
+                    throw new Error(`Failed to get pod status:
+                        ${JSON.stringify(resp.body, null, 2)}`);
                 }
 
                 const status = resp.body.status.phase.toLowerCase();
 
                 if (status === 'failed' || status === 'unknown') {
-                    throw new Error(
-                        `Failed to create pod. Pod status is: ${JSON.stringify(resp.body)}`);
+                    throw new Error(`Failed to create pod. Pod status is:
+                        ${JSON.stringify(resp.body.status, null, 2)}`);
                 }
 
                 return null;
