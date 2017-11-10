@@ -24,13 +24,15 @@ spec:
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app
-            operator: In
-            values:
-            - screwdriver-vm
-        topologyKey: kubernetes.io/hostname
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - screwdriver-vm
   restartPolicy: Never
   containers:
   - name: vm-launcher

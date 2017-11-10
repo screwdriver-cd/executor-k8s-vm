@@ -65,7 +65,11 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
-        const random = randomstring.generate(5);
+        const random = randomstring.generate({
+            length: 5,
+            charset: 'alphanumeric',
+            capitalization: 'lowercase'
+        });
         const podTemplate = tinytim.renderFile(path.resolve(__dirname, './config/pod.yaml.tim'), {
             pod_name: `${this.prefix}${config.buildId}-${random}`,
             build_id_with_prefix: `${this.prefix}${config.buildId}`,
