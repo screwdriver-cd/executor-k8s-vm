@@ -14,7 +14,7 @@ metadata:
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_id}}"
 `;
-const MAXATTEMPTS = 3;
+const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 
 describe('index', function () {

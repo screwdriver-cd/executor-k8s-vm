@@ -1,6 +1,6 @@
 'use strict';
 
-const MAXATTEMPTS = 3;
+const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 const Executor = require('screwdriver-executor-base');
 const Fusebox = require('circuit-fuses');
