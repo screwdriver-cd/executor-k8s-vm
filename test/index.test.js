@@ -304,8 +304,8 @@ describe('index', function () {
                     message: 'cannot get pod status'
                 }
             };
-            const returnMessage =
-                `Failed to get pod status: ${JSON.stringify(returnResponse.body)}`;
+            const returnMessage = `Failed to get pod status:
+                        ${JSON.stringify(returnResponse.body, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
@@ -331,8 +331,8 @@ describe('index', function () {
                     }
                 }
             };
-            const returnMessage =
-                `Failed to create pod. Pod status is: ${JSON.stringify(returnResponse.body)}`;
+            const returnMessage = `Failed to create pod. Pod status is:
+                        ${JSON.stringify(returnResponse.body.status, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
