@@ -16,7 +16,7 @@ metadata:
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_id}}"
 `;
-const MAXATTEMPTS = 3;
+const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 
 describe('index', () => {
@@ -324,8 +324,8 @@ describe('index', () => {
                     message: 'cannot get pod status'
                 }
             };
-            const returnMessage =
-                `Failed to get pod status: ${JSON.stringify(returnResponse.body)}`;
+            const returnMessage = `Failed to get pod status:
+                        ${JSON.stringify(returnResponse.body, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
@@ -351,8 +351,8 @@ describe('index', () => {
                     }
                 }
             };
-            const returnMessage =
-                `Failed to create pod. Pod status is: ${JSON.stringify(returnResponse.body)}`;
+            const returnMessage = `Failed to create pod. Pod status is:
+                        ${JSON.stringify(returnResponse.body.status, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
