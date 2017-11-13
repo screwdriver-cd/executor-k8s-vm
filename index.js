@@ -68,6 +68,18 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
+        // Default to 2 vcpu and 2GB memory
+        let CPU = 2;
+        let MEMORY = 2048;
+        const resourceType = hoek.reach(config, 'annotations', {
+            default: {}
+        })[ANNOTATION_RESOURCE_TYPE];
+
+        if (resourceType === 'HIGH') {
+            CPU = 6;
+            MEMORY = 12288; // 12GB
+        }
+
         const random = randomstring.generate({
             length: 5,
             charset: 'alphanumeric',
@@ -94,17 +106,6 @@ class K8sVMExecutor extends Executor {
             strictSSL: false,
             json: true
         };
-        // Default to 2 vcpu and 2GB memory
-        let CPU = 2;
-        let MEMORY = 2048;
-        const resourceType = hoek.reach(config, 'annotations', {
-            default: {}
-        })[ANNOTATION_RESOURCE_TYPE];
-
-        if (resourceType === 'HIGH') {
-            CPU = 6;
-            MEMORY = 12288; // 12GB
-        }
 
         return this.breaker.runCommand(options)
             .then((resp) => {
