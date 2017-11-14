@@ -11,6 +11,7 @@ const randomstring = require('randomstring');
 const requestretry = require('requestretry');
 const tinytim = require('tinytim');
 const yaml = require('js-yaml');
+const ANNOTATION_RESOURCE_TYPE = 'beta.screwdriver.cd/resource'; // Key in annotations object that maps to a resource type (HIGH or LOW)
 
 class K8sVMExecutor extends Executor {
     /**
@@ -59,19 +60,34 @@ class K8sVMExecutor extends Executor {
     /**
      * Starts a k8s build
      * @method start
-     * @param  {Object}   config            A configuration object
-     * @param  {Integer}  config.buildId    ID for the build
-     * @param  {String}   config.container  Container for the build to run in
-     * @param  {String}   config.token      JWT for the Build
+     * @param  {Object}   config                A configuration object
+     * @param  {Object}   [config.annotations]  Set of key value pairs
+     * @param  {Integer}  config.buildId        ID for the build
+     * @param  {String}   config.container      Container for the build to run in
+     * @param  {String}   config.token          JWT for the Build
      * @return {Promise}
      */
     _start(config) {
+        // Default to 2 vcpu and 2GB memory
+        let CPU = 2;
+        let MEMORY = 2048;
+        const resourceType = hoek.reach(config, 'annotations', {
+            default: {}
+        })[ANNOTATION_RESOURCE_TYPE];
+
+        if (resourceType === 'HIGH') {
+            CPU = 6;
+            MEMORY = 12288; // 12GB
+        }
+
         const random = randomstring.generate({
             length: 5,
             charset: 'alphanumeric',
             capitalization: 'lowercase'
         });
         const podTemplate = tinytim.renderFile(path.resolve(__dirname, './config/pod.yaml.tim'), {
+            cpu: CPU,
+            memory: MEMORY,
             pod_name: `${this.prefix}${config.buildId}-${random}`,
             build_id_with_prefix: `${this.prefix}${config.buildId}`,
             build_id: config.buildId,
