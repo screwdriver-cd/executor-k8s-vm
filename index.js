@@ -11,7 +11,8 @@ const randomstring = require('randomstring');
 const requestretry = require('requestretry');
 const tinytim = require('tinytim');
 const yaml = require('js-yaml');
-const ANNOTATION_RESOURCE_TYPE = 'beta.screwdriver.cd/resource'; // Key in annotations object that maps to a resource type (HIGH or LOW)
+const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
+const RAM_RESOURCE = 'beta.screwdriver.cd/ram';
 
 class K8sVMExecutor extends Executor {
     /**
@@ -68,18 +69,10 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
-        // Default to 2 vcpu and 2GB memory
-        let CPU = 2;
-        let MEMORY = 2048;
-        const resourceType = hoek.reach(config, 'annotations', {
-            default: {}
-        })[ANNOTATION_RESOURCE_TYPE];
-
-        if (resourceType === 'HIGH') {
-            CPU = 6;
-            MEMORY = 12288; // 12GB
-        }
-
+        const cpuConfig = hoek.reach(config, 'annotations', { default: {} })[CPU_RESOURCE];
+        const ramConfig = hoek.reach(config, 'annotations', { default: {} })[RAM_RESOURCE];
+        const CPU = (cpuConfig === 'HIGH') ? 6 : 2;
+        const MEMORY = (ramConfig === 'HIGH') ? 12288 : 2048;   // 12GB or 2GB
         const random = randomstring.generate({
             length: 5,
             charset: 'alphanumeric',
