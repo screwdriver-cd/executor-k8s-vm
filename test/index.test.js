@@ -280,13 +280,32 @@ describe('index', () => {
             })
         );
 
-        it('sets the CPU and memory appropriately when resource is set to HIGH', () => {
-            postConfig.body.metadata.cpu = 6;
+        it('sets the memory appropriately when ram is set to HIGH', () => {
+            postConfig.body.metadata.cpu = 2;
             postConfig.body.metadata.memory = 12288;
 
             return executor.start({
                 annotations: {
-                    'beta.screwdriver.cd/resource': 'HIGH'
+                    'beta.screwdriver.cd/ram': 'HIGH'
+                },
+                buildId: testBuildId,
+                container: testContainer,
+                token: testToken,
+                apiUri: testApiUri
+            }).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
+
+        it('sets the CPU appropriately when cpu is set to HIGH', () => {
+            postConfig.body.metadata.cpu = 6;
+            postConfig.body.metadata.memory = 2048;
+
+            return executor.start({
+                annotations: {
+                    'beta.screwdriver.cd/cpu': 'HIGH'
                 },
                 buildId: testBuildId,
                 container: testContainer,
