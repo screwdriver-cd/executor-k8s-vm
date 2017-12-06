@@ -6,20 +6,6 @@ metadata:
     sdbuild: "{{build_id_with_prefix}}"
     app: screwdriver-vm
     tier: builds
-  annotations:
-   pod.alpha.kubernetes.io/init-containers: '[
-     {
-       "name": "launcher",
-       "image": "screwdrivercd/launcher:{{launcher_version}}",
-       "command": ["/bin/sh", "-c", "cp -a /opt/sd/* /opt/launcher"],
-       "volumeMounts": [
-         {
-           "name": "sdlauncher",
-           "mountPath": "/opt/launcher"
-         }
-       ]
-     }
-  ]'
 spec:
   affinity:
     podAntiAffinity:
@@ -67,6 +53,13 @@ spec:
           command: ["/bin/bash", "-c", "sleep 2;
                     rm -rf /var/sd-workspaces/{{build_id_with_prefix}};
                     hyperctl rm builder-{{build_id_with_prefix}}"]
+  initContainers:
+  - name: launcher
+    image: screwdrivercd/launcher:{{launcher_version}}
+    command: ['/bin/sh', '-c', 'cp -a /opt/sd/* /opt/launcher']
+    volumeMounts:
+    - mountPath: /opt/launcher
+      name: sdlauncher
   volumes:
     - name: hyper-socket
       hostPath:
