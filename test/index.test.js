@@ -88,7 +88,17 @@ describe('index', () => {
                 token: 'api_key2',
                 host: 'kubernetes2',
                 jobsNamespace: 'baz',
-                baseImage: 'hyperctl'
+                baseImage: 'hyperctl',
+                resources: {
+                    cpu: {
+                        high: 8,
+                        low: 1
+                    },
+                    memory: {
+                        high: 5,
+                        low: 1
+                    }
+                }
             },
             prefix: 'beta_',
             launchVersion: 'v1.2.3'
@@ -99,6 +109,10 @@ describe('index', () => {
         assert.equal(executor.launchVersion, 'v1.2.3');
         assert.equal(executor.jobsNamespace, 'baz');
         assert.equal(executor.baseImage, 'hyperctl');
+        assert.equal(executor.highCpu, 8);
+        assert.equal(executor.lowCpu, 1);
+        assert.equal(executor.highMemory, 5);
+        assert.equal(executor.lowMemory, 1);
     });
 
     it('allow empty options', () => {
@@ -109,6 +123,10 @@ describe('index', () => {
         assert.equal(executor.launchVersion, 'stable');
         assert.equal(executor.prefix, '');
         assert.equal(executor.token, '');
+        assert.equal(executor.highCpu, 6);
+        assert.equal(executor.lowCpu, 2);
+        assert.equal(executor.highMemory, 12);
+        assert.equal(executor.lowMemory, 2);
     });
 
     it('extends base class', () => {
