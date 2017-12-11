@@ -18,18 +18,23 @@ class K8sVMExecutor extends Executor {
     /**
      * Constructor
      * @method constructor
-     * @param  {Object} options                                      Configuration options
-     * @param  {Object} options.ecosystem                            Screwdriver Ecosystem
-     * @param  {Object} options.ecosystem.api                        Routable URI to Screwdriver API
-     * @param  {Object} options.ecosystem.store                      Routable URI to Screwdriver Store
-     * @param  {Object} options.kubernetes                           Kubernetes configuration
-     * @param  {String} [options.kubernetes.token]                   API Token (loaded from /var/run/secrets/kubernetes.io/serviceaccount/token if not provided)
-     * @param  {String} [options.kubernetes.host=kubernetes.default] Kubernetes hostname
-     * @param  {String} [options.kubernetes.jobsNamespace=default]   Pods namespace for Screwdriver Jobs
-     * @param  {String} [options.kubernetes.baseImage]               Base image for the pod
-     * @param  {String} [options.launchVersion=stable]               Launcher container version to use
-     * @param  {String} [options.prefix='']                          Prefix for job name
-     * @param  {String} [options.fusebox]                            Options for the circuit breaker (https://github.com/screwdriver-cd/circuit-fuses)
+     * @param  {Object} options                                       Configuration options
+     * @param  {Object} options.ecosystem                             Screwdriver Ecosystem
+     * @param  {Object} options.ecosystem.api                         Routable URI to Screwdriver API
+     * @param  {Object} options.ecosystem.store                       Routable URI to Screwdriver Store
+     * @param  {Object} options.kubernetes                            Kubernetes configuration
+     * @param  {String} [options.kubernetes.token]                    API Token (loaded from /var/run/secrets/kubernetes.io/serviceaccount/token if not provided)
+     * @param  {String} [options.kubernetes.host=kubernetes.default]  Kubernetes hostname
+     * @param  {String} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
+     * @param  {String} [options.kubernetes.baseImage]                Base image for the pod
+     * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
+     * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
+     * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
+     * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
+     * @param  {Number} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
+     * @param  {String} [options.launchVersion=stable]                Launcher container version to use
+     * @param  {String} [options.prefix='']                           Prefix for job name
+     * @param  {String} [options.fusebox]                             Options for the circuit breaker (https://github.com/screwdriver-cd/circuit-fuses)
      */
     constructor(options = {}) {
         super();
@@ -51,6 +56,10 @@ class K8sVMExecutor extends Executor {
         this.baseImage = this.kubernetes.baseImage;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(requestretry, options.fusebox);
+        this.highCpu = hoek.reach(options, 'kubernetes.resources.cpu.high', { default: 6 });
+        this.lowCpu = hoek.reach(options, 'kubernetes.resources.cpu.low', { default: 2 });
+        this.highMemory = hoek.reach(options, 'kubernetes.resources.memory.high', { default: 12 });
+        this.lowMemory = hoek.reach(options, 'kubernetes.resources.memory.low', { default: 2 });
         this.podRetryStrategy = (err, response, body) => {
             const status = hoek.reach(body, 'status.phase');
 
@@ -71,8 +80,8 @@ class K8sVMExecutor extends Executor {
     _start(config) {
         const cpuConfig = hoek.reach(config, 'annotations', { default: {} })[CPU_RESOURCE];
         const ramConfig = hoek.reach(config, 'annotations', { default: {} })[RAM_RESOURCE];
-        const CPU = (cpuConfig === 'HIGH') ? 6 : 2;
-        const MEMORY = (ramConfig === 'HIGH') ? 12288 : 2048;   // 12GB or 2GB
+        const CPU = (cpuConfig === 'HIGH') ? this.highCpu : this.lowCpu;
+        const MEMORY = (ramConfig === 'HIGH') ? this.highMemory * 1024 : this.lowMemory * 1024;   // 12GB or 2GB
         const random = randomstring.generate({
             length: 5,
             charset: 'alphanumeric',
