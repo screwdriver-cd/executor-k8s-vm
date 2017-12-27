@@ -336,6 +336,27 @@ describe('index', () => {
             });
         });
 
+        it('sets tolerations with appropriate config', () => {
+            postConfig.tolerations = [{
+                key: 'key',
+                value: 'value',
+                effect: 'NoSchedule',
+                operator: 'Equal'
+            }];
+
+            return executor.start({
+                tolerations: [{ key: 'key', value: 'value' }],
+                buildId: testBuildId,
+                container: testContainer,
+                token: testToken,
+                apiUri: testApiUri
+            }).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
+
         it('returns error when request responds with error', () => {
             const error = new Error('lol');
 

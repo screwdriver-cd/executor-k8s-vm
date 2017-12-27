@@ -100,10 +100,24 @@ class K8sVMExecutor extends Executor {
             launcher_version: this.launchVersion,
             base_image: this.baseImage
         });
+
+        const podConfig = yaml.safeLoad(podTemplate);
+
+        const tolerations = hoek.reach(config, 'tolerations', { default: [] });
+
+        if (Array.isArray(tolerations) && tolerations.length) {
+            podConfig.spec.tolerations = tolerations.map(toleration => ({
+                key: toleration.key,
+                value: toleration.value,
+                effect: toleration.effect || 'NoSchedule',
+                operator: toleration.operator || 'Equal'
+            }));
+        }
+
         const options = {
             uri: this.podsUrl,
             method: 'POST',
-            body: yaml.safeLoad(podTemplate),
+            body: podConfig,
             headers: { Authorization: `Bearer ${this.token}` },
             strictSSL: false,
             json: true
