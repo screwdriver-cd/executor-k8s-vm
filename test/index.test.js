@@ -338,7 +338,7 @@ describe('index', () => {
             });
         });
 
-        it.only('sets tolerations with appropriate config', () => {
+        it('sets tolerations with appropriate config', () => {
             postConfig.body.spec = {};
             postConfig.body.spec.tolerations = [{
                 key: 'key',
@@ -361,6 +361,8 @@ describe('index', () => {
                 },
                 prefix: 'beta_'
             });
+
+            delete getConfig.retryStrategy;
 
             return executor.start({
                 buildId: testBuildId,
