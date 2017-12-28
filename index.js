@@ -65,6 +65,17 @@ class K8sVMExecutor extends Executor {
 
             return err || !status || status.toLowerCase() === 'pending';
         };
+
+        const tolerations = hoek.reach(options, 'kubernetes.tolerations', { default: [] });
+
+        if (Array.isArray(tolerations) && tolerations.length) {
+            this.tolerations = tolerations.map(toleration => ({
+                key: toleration.key,
+                value: toleration.value,
+                effect: toleration.effect || 'NoSchedule',
+                operator: toleration.operator || 'Equal'
+            }));
+        }
     }
 
     /**
@@ -103,15 +114,8 @@ class K8sVMExecutor extends Executor {
 
         const podConfig = yaml.safeLoad(podTemplate);
 
-        const tolerations = hoek.reach(config, 'tolerations', { default: [] });
-
-        if (Array.isArray(tolerations) && tolerations.length) {
-            podConfig.spec.tolerations = tolerations.map(toleration => ({
-                key: toleration.key,
-                value: toleration.value,
-                effect: toleration.effect || 'NoSchedule',
-                operator: toleration.operator || 'Equal'
-            }));
+        if (this.tolerations) {
+            podConfig.spec.tolerations = this.tolerations;
         }
 
         const options = {
