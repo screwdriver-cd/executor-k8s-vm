@@ -223,28 +223,7 @@ describe('index', () => {
     });
 
     describe('start', () => {
-        const postConfig = {
-            uri: podsUrl,
-            method: 'POST',
-            body: {
-                metadata: {
-                    cpu: 2,
-                    memory: 2048,
-                    name: 'beta_15',
-                    container: testContainer,
-                    launchVersion: testLaunchVersion
-                },
-                command: [
-                    '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
-                    + '15'
-                ]
-            },
-            headers: {
-                Authorization: 'Bearer api_key'
-            },
-            strictSSL: false,
-            json: true
-        };
+        let postConfig;
         let getConfig;
 
         const fakeStartResponse = {
@@ -266,6 +245,29 @@ describe('index', () => {
         };
 
         beforeEach(() => {
+            postConfig = {
+                uri: podsUrl,
+                method: 'POST',
+                body: {
+                    metadata: {
+                        cpu: 2,
+                        memory: 2048,
+                        name: 'beta_15',
+                        container: testContainer,
+                        launchVersion: testLaunchVersion
+                    },
+                    command: [
+                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                        + '15'
+                    ]
+                },
+                headers: {
+                    Authorization: 'Bearer api_key'
+                },
+                strictSSL: false,
+                json: true
+            };
+
             getConfig = {
                 uri: `${podsUrl}/testpod/status`,
                 method: 'GET',
@@ -336,16 +338,31 @@ describe('index', () => {
             });
         });
 
-        it('sets tolerations with appropriate config', () => {
-            postConfig.tolerations = [{
+        it.only('sets tolerations with appropriate config', () => {
+            postConfig.body.spec = {};
+            postConfig.body.spec.tolerations = [{
                 key: 'key',
                 value: 'value',
                 effect: 'NoSchedule',
                 operator: 'Equal'
             }];
 
+            executor = new Executor({
+                ecosystem: {
+                    api: testApiUri,
+                    store: testStoreUri
+                },
+                fusebox: { retry: { minTimeout: 1 } },
+                kubernetes: {
+                    tolerations: [{ key: 'key', value: 'value' }],
+                    token: 'api_key',
+                    host: 'kubernetes.default',
+                    baseImage: 'hyperctl'
+                },
+                prefix: 'beta_'
+            });
+
             return executor.start({
-                tolerations: [{ key: 'key', value: 'value' }],
                 buildId: testBuildId,
                 container: testContainer,
                 token: testToken,

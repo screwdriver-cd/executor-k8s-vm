@@ -115,6 +115,7 @@ class K8sVMExecutor extends Executor {
         const podConfig = yaml.safeLoad(podTemplate);
 
         if (this.tolerations) {
+            podConfig.spec = podConfig.spec || {};
             podConfig.spec.tolerations = this.tolerations;
         }
 
