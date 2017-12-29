@@ -338,7 +338,7 @@ describe('index', () => {
             });
         });
 
-        it('sets tolerations with appropriate config', () => {
+        it('sets tolerations and node affinity with appropriate node config', () => {
             const spec = {};
 
             postConfig.body.spec = spec;
