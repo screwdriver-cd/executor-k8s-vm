@@ -1,7 +1,5 @@
 'use strict';
 
-const MAXATTEMPTS = 5;
-const RETRYDELAY = 3000;
 const Executor = require('screwdriver-executor-base');
 const Fusebox = require('circuit-fuses');
 const fs = require('fs');
@@ -11,8 +9,50 @@ const randomstring = require('randomstring');
 const requestretry = require('requestretry');
 const tinytim = require('tinytim');
 const yaml = require('js-yaml');
+const _ = require('lodash');
+
+const MAXATTEMPTS = 5;
+const RETRYDELAY = 3000;
 const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
 const RAM_RESOURCE = 'beta.screwdriver.cd/ram';
+const TOLERATIONS_PATH = 'spec.tolerations';
+const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
+    'requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms';
+
+/**
+ * Parses nodeSelector config and update intended nodeSelector in tolerations
+ * and nodeAffinity.
+ * @method setNodeSelector
+ * @param {Object} podConfig k8s pod config
+ * @param {Object} nodeSelectors key-value pairs of node selectors
+ */
+function setNodeSelector(podConfig, nodeSelectors) {
+    if (!nodeSelectors || typeof nodeSelectors !== 'object') {
+        return;
+    }
+
+    const tolerations = _.get(podConfig, TOLERATIONS_PATH, []);
+    const nodeAffinitySelectors = _.get(podConfig, AFFINITY_NODE_SELECTOR_PATH, []);
+
+    Object.keys(nodeSelectors).forEach((key) => {
+        tolerations.push({
+            key,
+            value: nodeSelectors[key],
+            effect: 'NoSchedule',
+            operator: 'Equal'
+        });
+        nodeAffinitySelectors.push({
+            matchExpressions: [{
+                key,
+                operator: 'In',
+                values: [nodeSelectors[key]]
+            }]
+        });
+    });
+
+    _.set(podConfig, TOLERATIONS_PATH, tolerations);
+    _.set(podConfig, AFFINITY_NODE_SELECTOR_PATH, nodeAffinitySelectors);
+}
 
 class K8sVMExecutor extends Executor {
     /**
@@ -66,16 +106,7 @@ class K8sVMExecutor extends Executor {
             return err || !status || status.toLowerCase() === 'pending';
         };
 
-        const tolerations = hoek.reach(options, 'kubernetes.tolerations', { default: [] });
-
-        if (Array.isArray(tolerations) && tolerations.length) {
-            this.tolerations = tolerations.map(toleration => ({
-                key: toleration.key,
-                value: toleration.value,
-                effect: toleration.effect || 'NoSchedule',
-                operator: toleration.operator || 'Equal'
-            }));
-        }
+        this.nodeSelectors = hoek.reach(options, 'kubernetes.nodeSelectors');
     }
 
     /**
@@ -114,10 +145,7 @@ class K8sVMExecutor extends Executor {
 
         const podConfig = yaml.safeLoad(podTemplate);
 
-        if (this.tolerations) {
-            podConfig.spec = podConfig.spec || {};
-            podConfig.spec.tolerations = this.tolerations;
-        }
+        setNodeSelector(podConfig, this.nodeSelectors);
 
         const options = {
             uri: this.podsUrl,

@@ -339,13 +339,30 @@ describe('index', () => {
         });
 
         it('sets tolerations with appropriate config', () => {
-            postConfig.body.spec = {};
-            postConfig.body.spec.tolerations = [{
+            const spec = {};
+
+            postConfig.body.spec = spec;
+
+            spec.tolerations = [{
                 key: 'key',
                 value: 'value',
                 effect: 'NoSchedule',
                 operator: 'Equal'
             }];
+
+            spec.affinity = {
+                nodeAffinity: {
+                    requiredDuringSchedulingIgnoredDuringExecution: {
+                        nodeSelectorTerms: [{
+                            matchExpressions: [{
+                                key: 'key',
+                                operator: 'In',
+                                values: ['value']
+                            }]
+                        }]
+                    }
+                }
+            };
 
             executor = new Executor({
                 ecosystem: {
@@ -355,6 +372,7 @@ describe('index', () => {
                 fusebox: { retry: { minTimeout: 1 } },
                 kubernetes: {
                     tolerations: [{ key: 'key', value: 'value' }],
+                    nodeSelectors: { key: 'value' },
                     token: 'api_key',
                     host: 'kubernetes.default',
                     baseImage: 'hyperctl'
@@ -362,7 +380,7 @@ describe('index', () => {
                 prefix: 'beta_'
             });
 
-            delete getConfig.retryStrategy;
+            getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start({
                 buildId: testBuildId,

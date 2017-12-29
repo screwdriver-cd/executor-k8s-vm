@@ -52,6 +52,7 @@
         "circuit-fuses": "^2.1.0",
         "hoek": "^5.0.2",
         "js-yaml": "^3.6.1",
+        "lodash": "^4.17.4",
         "randomstring": "^1.1.5",
         "requestretry": "^1.12.2",
         "screwdriver-executor-base": "^5.2.0",
