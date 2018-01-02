@@ -72,6 +72,7 @@ class K8sVMExecutor extends Executor {
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
      * @param  {Number} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
+     * @param  {Object} [options.kubernetes.nodeSelectors]            Object representing node label-value pairs
      * @param  {String} [options.launchVersion=stable]                Launcher container version to use
      * @param  {String} [options.prefix='']                           Prefix for job name
      * @param  {String} [options.fusebox]                             Options for the circuit breaker (https://github.com/screwdriver-cd/circuit-fuses)

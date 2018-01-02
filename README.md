@@ -23,6 +23,7 @@ The class provides a couple options that are configurable in the instantiation o
 | config.prefix | String | '' |Prefix to container names ("") |
 | config.jobsNamespace | String | 'default' | Kubernetes namespace where builds are running on |
 | config.baseImage | String | '' | Base image used to start the VM |
+| config.nodeSelectors| Object | undefined | Object representing node label-value pairs https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#step-one-attach-label-to-the-node|
 
 
 ### Methods
