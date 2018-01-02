@@ -18,12 +18,12 @@ The class provides a couple options that are configurable in the instantiation o
 | config.kubernetes | Object | {} | Kubernetes configuration Object |
 | config.kubernetes.token | String | '' | The JWT token used for authenticating to the Kubernetes cluster. (If not passed in, we will read from `/var/run/secrets/kubernetes.io/serviceaccount/token`.) |
 | config.kubernetes.host | String | 'kubernetes.defaults' | The hostname for the Kubernetes cluster (kubernetes) |
+| config.kubernetes.nodeSelectors| Object | | Object representing node label-value pairs https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#step-one-attach-label-to-the-node|
 | config.ecosystem | Object | | Screwdriver Ecosystem (ui, api, store, etc.) |
 | config.launchVersion | String | 'stable' | Launcher container version to use (stable) |
 | config.prefix | String | '' |Prefix to container names ("") |
 | config.jobsNamespace | String | 'default' | Kubernetes namespace where builds are running on |
 | config.baseImage | String | '' | Base image used to start the VM |
-| config.nodeSelectors| Object | undefined | Object representing node label-value pairs https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#step-one-attach-label-to-the-node|
 
 
 ### Methods
