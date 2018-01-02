@@ -223,28 +223,7 @@ describe('index', () => {
     });
 
     describe('start', () => {
-        const postConfig = {
-            uri: podsUrl,
-            method: 'POST',
-            body: {
-                metadata: {
-                    cpu: 2,
-                    memory: 2048,
-                    name: 'beta_15',
-                    container: testContainer,
-                    launchVersion: testLaunchVersion
-                },
-                command: [
-                    '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
-                    + '15'
-                ]
-            },
-            headers: {
-                Authorization: 'Bearer api_key'
-            },
-            strictSSL: false,
-            json: true
-        };
+        let postConfig;
         let getConfig;
 
         const fakeStartResponse = {
@@ -266,6 +245,29 @@ describe('index', () => {
         };
 
         beforeEach(() => {
+            postConfig = {
+                uri: podsUrl,
+                method: 'POST',
+                body: {
+                    metadata: {
+                        cpu: 2,
+                        memory: 2048,
+                        name: 'beta_15',
+                        container: testContainer,
+                        launchVersion: testLaunchVersion
+                    },
+                    command: [
+                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                        + '15'
+                    ]
+                },
+                headers: {
+                    Authorization: 'Bearer api_key'
+                },
+                strictSSL: false,
+                json: true
+            };
+
             getConfig = {
                 uri: `${podsUrl}/testpod/status`,
                 method: 'GET',
@@ -325,6 +327,62 @@ describe('index', () => {
                 annotations: {
                     'beta.screwdriver.cd/cpu': 'HIGH'
                 },
+                buildId: testBuildId,
+                container: testContainer,
+                token: testToken,
+                apiUri: testApiUri
+            }).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
+
+        it('sets tolerations and node affinity with appropriate node config', () => {
+            const spec = {};
+
+            postConfig.body.spec = spec;
+
+            spec.tolerations = [{
+                key: 'key',
+                value: 'value',
+                effect: 'NoSchedule',
+                operator: 'Equal'
+            }];
+
+            spec.affinity = {
+                nodeAffinity: {
+                    requiredDuringSchedulingIgnoredDuringExecution: {
+                        nodeSelectorTerms: [{
+                            matchExpressions: [{
+                                key: 'key',
+                                operator: 'In',
+                                values: ['value']
+                            }]
+                        }]
+                    }
+                }
+            };
+
+            executor = new Executor({
+                ecosystem: {
+                    api: testApiUri,
+                    store: testStoreUri
+                },
+                fusebox: { retry: { minTimeout: 1 } },
+                kubernetes: {
+                    tolerations: [{ key: 'key', value: 'value' }],
+                    nodeSelectors: { key: 'value' },
+                    token: 'api_key',
+                    host: 'kubernetes.default',
+                    baseImage: 'hyperctl'
+                },
+                prefix: 'beta_'
+            });
+
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
+            return executor.start({
                 buildId: testBuildId,
                 container: testContainer,
                 token: testToken,
