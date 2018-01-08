@@ -30,11 +30,17 @@ function setNodeSelector(podConfig, nodeSelectors) {
     if (!nodeSelectors || typeof nodeSelectors !== 'object') {
         return;
     }
+    
+    const selectors = Object.keys(nodeSelectors);
+    
+    if (!selectors.length) {
+        return;
+    }
 
     const tolerations = _.get(podConfig, TOLERATIONS_PATH, []);
     const nodeAffinitySelectors = _.get(podConfig, AFFINITY_NODE_SELECTOR_PATH, []);
 
-    Object.keys(nodeSelectors).forEach((key) => {
+    selectors.forEach((key) => {
         tolerations.push({
             key,
             value: nodeSelectors[key],
