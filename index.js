@@ -30,9 +30,9 @@ function setNodeSelector(podConfig, nodeSelectors) {
     if (!nodeSelectors || typeof nodeSelectors !== 'object') {
         return;
     }
-    
+
     const selectors = Object.keys(nodeSelectors);
-    
+
     if (!selectors.length) {
         return;
     }

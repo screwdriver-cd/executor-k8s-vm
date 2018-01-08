@@ -85,6 +85,7 @@ describe('index', () => {
         assert.equal(executor.host, 'kubernetes.default');
         executor = new Executor({
             kubernetes: {
+                nodeSelectors: {},
                 token: 'api_key2',
                 host: 'kubernetes2',
                 jobsNamespace: 'baz',
@@ -371,7 +372,6 @@ describe('index', () => {
                 },
                 fusebox: { retry: { minTimeout: 1 } },
                 kubernetes: {
-                    tolerations: [{ key: 'key', value: 'value' }],
                     nodeSelectors: { key: 'value' },
                     token: 'api_key',
                     host: 'kubernetes.default',
