@@ -27,7 +27,7 @@ const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
  * @param {Object} nodeSelectors key-value pairs of node selectors
  */
 function setNodeSelector(podConfig, nodeSelectors) {
-    if (!nodeSelectors || typeof nodeSelectors !== 'object') {
+    if (!nodeSelectors || typeof nodeSelectors !== 'object' || !Object.keys(nodeSelectors).length) {
         return;
     }
 
