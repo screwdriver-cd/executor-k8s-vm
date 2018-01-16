@@ -27,20 +27,14 @@ const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
  * @param {Object} nodeSelectors key-value pairs of node selectors
  */
 function setNodeSelector(podConfig, nodeSelectors) {
-    if (!nodeSelectors || typeof nodeSelectors !== 'object') {
-        return;
-    }
-
-    const selectors = Object.keys(nodeSelectors);
-
-    if (!selectors.length) {
+    if (!nodeSelectors || typeof nodeSelectors !== 'object' || !Object.keys(nodeSelectors).length) {
         return;
     }
 
     const tolerations = _.get(podConfig, TOLERATIONS_PATH, []);
     const nodeAffinitySelectors = _.get(podConfig, AFFINITY_NODE_SELECTOR_PATH, []);
 
-    selectors.forEach((key) => {
+    Object.keys(nodeSelectors).forEach((key) => {
         tolerations.push({
             key,
             value: nodeSelectors[key],
