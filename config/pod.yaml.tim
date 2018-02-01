@@ -41,6 +41,8 @@ spec:
          "--build_token", "{{token}}"
           ]
     env:
+    - name: METRIC_HOST
+      value: "{{metric_host}}"
     - name: NODE_ID
       valueFrom:
         fieldRef:

@@ -139,6 +139,7 @@ class K8sVMExecutor extends Executor {
             container: config.container,
             api_uri: this.ecosystem.api,
             store_uri: this.ecosystem.store,
+            metric_host: this.ecosystem.metric_host,
             token: config.token,
             launcher_version: this.launchVersion,
             base_image: this.baseImage
