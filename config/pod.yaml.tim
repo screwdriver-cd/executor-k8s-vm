@@ -40,6 +40,11 @@ spec:
          "--id_with_prefix", "{{build_id_with_prefix}}",
          "--build_token", "{{token}}"
           ]
+    env:
+    - name: NODE_ID
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
     volumeMounts:
     - mountPath: /var/run
       name: hyper-socket
