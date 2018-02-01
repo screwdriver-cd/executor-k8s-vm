@@ -82,7 +82,6 @@ class K8sVMExecutor extends Executor {
 
         this.kubernetes = options.kubernetes || {};
         this.ecosystem = options.ecosystem;
-        this.ecosystem.metric_host = hoek.reach(options.ecosystem, 'metric_host') || '';
 
         if (this.kubernetes.token) {
             this.token = this.kubernetes.token;
@@ -140,7 +139,7 @@ class K8sVMExecutor extends Executor {
             container: config.container,
             api_uri: this.ecosystem.api,
             store_uri: this.ecosystem.store,
-            metric_host: this.ecosystem.metric_host,
+            metric_host: hoek.reach(this.ecosystem, 'metric_host', { default: '' }),
             token: config.token,
             launcher_version: this.launchVersion,
             base_image: this.baseImage
