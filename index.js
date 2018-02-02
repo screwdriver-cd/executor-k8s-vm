@@ -61,6 +61,7 @@ class K8sVMExecutor extends Executor {
      * @param  {Object} options                                       Configuration options
      * @param  {Object} options.ecosystem                             Screwdriver Ecosystem
      * @param  {Object} options.ecosystem.api                         Routable URI to Screwdriver API
+     * @param  {Object} [options.ecosystem.metric_host]               Hostname for metrics service, or pushgateway
      * @param  {Object} options.ecosystem.store                       Routable URI to Screwdriver Store
      * @param  {Object} options.kubernetes                            Kubernetes configuration
      * @param  {String} [options.kubernetes.token]                    API Token (loaded from /var/run/secrets/kubernetes.io/serviceaccount/token if not provided)
@@ -139,6 +140,7 @@ class K8sVMExecutor extends Executor {
             container: config.container,
             api_uri: this.ecosystem.api,
             store_uri: this.ecosystem.store,
+            metric_host: hoek.reach(this.ecosystem, 'metric_host', { default: '' }),
             token: config.token,
             launcher_version: this.launchVersion,
             base_image: this.baseImage
