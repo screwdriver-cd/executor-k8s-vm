@@ -41,8 +41,8 @@ spec:
          "--build_token", "{{token}}"
           ]
     env:
-    - name: METRIC_HOST
-      value: "{{metric_host}}"
+    - name: PUSHGATEWAY_URL
+      value: "{{pushgateway_url}}"
     - name: NODE_ID
       valueFrom:
         fieldRef:
