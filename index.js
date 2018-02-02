@@ -62,6 +62,7 @@ class K8sVMExecutor extends Executor {
      * @param  {Object} options.ecosystem                             Screwdriver Ecosystem
      * @param  {Object} options.ecosystem.api                         Routable URI to Screwdriver API
      * @param  {Object} options.ecosystem.store                       Routable URI to Screwdriver Store
+     * @param  {Object} options.ecosystem.metric_host                 Hostname for metrics service, or pushgateway
      * @param  {Object} options.kubernetes                            Kubernetes configuration
      * @param  {String} [options.kubernetes.token]                    API Token (loaded from /var/run/secrets/kubernetes.io/serviceaccount/token if not provided)
      * @param  {String} [options.kubernetes.host=kubernetes.default]  Kubernetes hostname
