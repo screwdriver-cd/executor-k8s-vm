@@ -14,7 +14,7 @@ metadata:
   container: {{container}}
   launchVersion: {{launcher_version}}
 command:
-- "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_id}}"
+- "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_timeout}} {{build_id}}"
 `;
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
@@ -85,6 +85,7 @@ describe('index', () => {
         assert.equal(executor.host, 'kubernetes.default');
         executor = new Executor({
             kubernetes: {
+                buildTimeout: 3600,
                 nodeSelectors: {},
                 token: 'api_key2',
                 host: 'kubernetes2',
@@ -104,12 +105,13 @@ describe('index', () => {
             prefix: 'beta_',
             launchVersion: 'v1.2.3'
         });
+        assert.equal(executor.buildTimeout, 3600);
+        assert.equal(executor.baseImage, 'hyperctl');
         assert.equal(executor.prefix, 'beta_');
         assert.equal(executor.token, 'api_key2');
         assert.equal(executor.host, 'kubernetes2');
         assert.equal(executor.launchVersion, 'v1.2.3');
         assert.equal(executor.jobsNamespace, 'baz');
-        assert.equal(executor.baseImage, 'hyperctl');
         assert.equal(executor.highCpu, 8);
         assert.equal(executor.lowCpu, 1);
         assert.equal(executor.highMemory, 5);
@@ -119,6 +121,7 @@ describe('index', () => {
     it('allow empty options', () => {
         fsMock.existsSync.returns(false);
         executor = new Executor();
+        assert.equal(executor.buildTimeout, 5400);
         assert.equal(executor.launchVersion, 'stable');
         assert.equal(executor.host, 'kubernetes.default');
         assert.equal(executor.launchVersion, 'stable');
@@ -258,7 +261,7 @@ describe('index', () => {
                         launchVersion: testLaunchVersion
                     },
                     command: [
-                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 5400 '
                         + '15'
                     ]
                 },
@@ -486,6 +489,26 @@ describe('index', () => {
                 throw new Error('did not fail');
             }, (err) => {
                 assert.equal(err.message, returnMessage);
+            });
+        });
+
+        it('sets the build timeout', () => {
+            postConfig.body.command = [
+                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 10800 15'
+            ];
+
+            return executor.start({
+                annotations: {
+                    'beta.screwdriver.cd/timeout': 10800
+                },
+                buildId: testBuildId,
+                container: testContainer,
+                token: testToken,
+                apiUri: testApiUri
+            }).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
             });
         });
     });

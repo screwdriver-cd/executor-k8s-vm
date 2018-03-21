@@ -38,7 +38,8 @@ spec:
          "--store_uri", "{{store_uri}}",
          "--build_id", "{{build_id}}",
          "--id_with_prefix", "{{build_id_with_prefix}}",
-         "--build_token", "{{token}}"
+         "--build_token", "{{token}}",
+         "--build_timeout", "{{build_timeout}}"
           ]
     env:
     - name: PUSHGATEWAY_URL

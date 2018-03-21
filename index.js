@@ -11,10 +11,12 @@ const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
+const DEFAULT_BUILD_TIMEOUT = 5400;   // 90 minutes in seconds
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
 const RAM_RESOURCE = 'beta.screwdriver.cd/ram';
+const ANNOTATION_BUILD_TIMEOUT = 'beta.screwdriver.cd/timeout';
 const TOLERATIONS_PATH = 'spec.tolerations';
 const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
     'requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms';
@@ -68,6 +70,7 @@ class K8sVMExecutor extends Executor {
      * @param  {String} [options.kubernetes.host=kubernetes.default]  Kubernetes hostname
      * @param  {String} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
      * @param  {String} [options.kubernetes.baseImage]                Base image for the pod
+     * @param  {Number} [options.kubernetes.buildTimeout=5400]        Number of seconds to allow a build to run before considering it is timed out
      * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
@@ -96,6 +99,7 @@ class K8sVMExecutor extends Executor {
         this.prefix = options.prefix || '';
         this.jobsNamespace = this.kubernetes.jobsNamespace || 'default';
         this.baseImage = this.kubernetes.baseImage;
+        this.buildTimeout = this.kubernetes.buildTimeout || DEFAULT_BUILD_TIMEOUT;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(requestretry, options.fusebox);
         this.highCpu = hoek.reach(options, 'kubernetes.resources.cpu.high', { default: 6 });
@@ -122,8 +126,10 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
+        const annotations = hoek.reach(config, 'annotations', { default: {} });
         const cpuConfig = hoek.reach(config, 'annotations', { default: {} })[CPU_RESOURCE];
         const ramConfig = hoek.reach(config, 'annotations', { default: {} })[RAM_RESOURCE];
+        const buildTimeout = annotations[ANNOTATION_BUILD_TIMEOUT] || this.buildTimeout;
         const CPU = (cpuConfig === 'HIGH') ? this.highCpu : this.lowCpu;
         const MEMORY = (ramConfig === 'HIGH') ? this.highMemory * 1024 : this.lowMemory * 1024;   // 12GB or 2GB
         const random = randomstring.generate({
@@ -137,6 +143,7 @@ class K8sVMExecutor extends Executor {
             pod_name: `${this.prefix}${config.buildId}-${random}`,
             build_id_with_prefix: `${this.prefix}${config.buildId}`,
             build_id: config.buildId,
+            build_timeout: buildTimeout,
             container: config.container,
             api_uri: this.ecosystem.api,
             store_uri: this.ecosystem.store,
