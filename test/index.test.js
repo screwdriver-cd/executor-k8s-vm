@@ -85,7 +85,7 @@ describe('index', () => {
         assert.equal(executor.host, 'kubernetes.default');
         executor = new Executor({
             kubernetes: {
-                buildTimeout: 3600,
+                buildTimeout: 30,
                 nodeSelectors: {},
                 token: 'api_key2',
                 host: 'kubernetes2',
@@ -105,7 +105,7 @@ describe('index', () => {
             prefix: 'beta_',
             launchVersion: 'v1.2.3'
         });
-        assert.equal(executor.buildTimeout, 3600);
+        assert.equal(executor.buildTimeout, 30);
         assert.equal(executor.baseImage, 'hyperctl');
         assert.equal(executor.prefix, 'beta_');
         assert.equal(executor.token, 'api_key2');
@@ -121,7 +121,7 @@ describe('index', () => {
     it('allow empty options', () => {
         fsMock.existsSync.returns(false);
         executor = new Executor();
-        assert.equal(executor.buildTimeout, 5400);
+        assert.equal(executor.buildTimeout, 90);
         assert.equal(executor.launchVersion, 'stable');
         assert.equal(executor.host, 'kubernetes.default');
         assert.equal(executor.launchVersion, 'stable');
@@ -261,7 +261,7 @@ describe('index', () => {
                         launchVersion: testLaunchVersion
                     },
                     command: [
-                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 5400 '
+                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 90 '
                         + '15'
                     ]
                 },

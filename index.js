@@ -11,7 +11,7 @@ const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
-const DEFAULT_BUILD_TIMEOUT = 5400;   // 90 minutes in seconds
+const DEFAULT_BUILD_TIMEOUT = 90;   // 90 minutes
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
@@ -70,7 +70,7 @@ class K8sVMExecutor extends Executor {
      * @param  {String} [options.kubernetes.host=kubernetes.default]  Kubernetes hostname
      * @param  {String} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
      * @param  {String} [options.kubernetes.baseImage]                Base image for the pod
-     * @param  {Number} [options.kubernetes.buildTimeout=5400]        Number of seconds to allow a build to run before considering it is timed out
+     * @param  {Number} [options.kubernetes.buildTimeout=90]          Number of minutes to allow a build to run before considering it is timed out
      * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
