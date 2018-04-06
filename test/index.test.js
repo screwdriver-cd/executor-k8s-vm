@@ -1,8 +1,11 @@
 'use strict';
 
 const assert = require('chai').assert;
-const sinon = require('sinon');
 const mockery = require('mockery');
+const rewire = require('rewire');
+const sinon = require('sinon');
+const yaml = require('js-yaml');
+const index = rewire('../index.js');
 
 sinon.assert.expose(assert, { prefix: '' });
 
@@ -31,6 +34,27 @@ describe('index', () => {
     const testContainer = 'node:4';
     const testLaunchVersion = 'stable';
     const podsUrl = 'https://kubernetes.default/api/v1/namespaces/default/pods';
+    const testSpec = {
+        tolerations: [{
+            key: 'key',
+            value: 'value',
+            effect: 'NoSchedule',
+            operator: 'Equal'
+        }],
+        affinity: {
+            nodeAffinity: {
+                requiredDuringSchedulingIgnoredDuringExecution: {
+                    nodeSelectorTerms: [{
+                        matchExpressions: [{
+                            key: 'key',
+                            operator: 'In',
+                            values: ['value']
+                        }]
+                    }]
+                }
+            }
+        }
+    };
 
     before(() => {
         mockery.enable({
@@ -229,6 +253,7 @@ describe('index', () => {
     describe('start', () => {
         let postConfig;
         let getConfig;
+        let fakeStartConfig;
 
         const fakeStartResponse = {
             statusCode: 201,
@@ -285,6 +310,14 @@ describe('index', () => {
                 retryStrategy: executor.podRetryStrategy
             };
 
+            fakeStartConfig = {
+                annotations: {},
+                buildId: testBuildId,
+                container: testContainer,
+                token: testToken,
+                apiUri: testApiUri
+            };
+
             requestRetryMock.withArgs(sinon.match({ method: 'POST' })).yieldsAsync(
                 null, fakeStartResponse, fakeStartResponse.body);
             requestRetryMock.withArgs(sinon.match({ method: 'GET' })).yieldsAsync(
@@ -292,12 +325,7 @@ describe('index', () => {
         });
 
         it('successfully calls start', () =>
-            executor.start({
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
                 assert.calledWith(requestRetryMock.secondCall,
                     sinon.match(getConfig));
@@ -307,16 +335,9 @@ describe('index', () => {
         it('sets the memory appropriately when ram is set to HIGH', () => {
             postConfig.body.metadata.cpu = 2;
             postConfig.body.metadata.memory = 12288;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/ram': 'HIGH' };
 
-            return executor.start({
-                annotations: {
-                    'beta.screwdriver.cd/ram': 'HIGH'
-                },
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
                 assert.calledWith(requestRetryMock.secondCall,
                     sinon.match(getConfig));
@@ -326,16 +347,9 @@ describe('index', () => {
         it('sets the CPU appropriately when cpu is set to HIGH', () => {
             postConfig.body.metadata.cpu = 6;
             postConfig.body.metadata.memory = 2048;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 'HIGH' };
 
-            return executor.start({
-                annotations: {
-                    'beta.screwdriver.cd/cpu': 'HIGH'
-                },
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
                 assert.calledWith(requestRetryMock.secondCall,
                     sinon.match(getConfig));
@@ -343,30 +357,7 @@ describe('index', () => {
         });
 
         it('sets tolerations and node affinity with appropriate node config', () => {
-            const spec = {};
-
-            postConfig.body.spec = spec;
-
-            spec.tolerations = [{
-                key: 'key',
-                value: 'value',
-                effect: 'NoSchedule',
-                operator: 'Equal'
-            }];
-
-            spec.affinity = {
-                nodeAffinity: {
-                    requiredDuringSchedulingIgnoredDuringExecution: {
-                        nodeSelectorTerms: [{
-                            matchExpressions: [{
-                                key: 'key',
-                                operator: 'In',
-                                values: ['value']
-                            }]
-                        }]
-                    }
-                }
-            };
+            postConfig.body.spec = testSpec;
 
             executor = new Executor({
                 ecosystem: {
@@ -385,12 +376,7 @@ describe('index', () => {
 
             getConfig.retryStrategy = executor.podRetryStrategy;
 
-            return executor.start({
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
                 assert.calledWith(requestRetryMock.secondCall,
                     sinon.match(getConfig));
@@ -402,12 +388,7 @@ describe('index', () => {
 
             requestRetryMock.withArgs(postConfig).yieldsAsync(error);
 
-            return executor.start({
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            return executor.start(fakeStartConfig).then(() => {
                 throw new Error('did not fail');
             }, (err) => {
                 assert.deepEqual(err, error);
@@ -428,12 +409,7 @@ describe('index', () => {
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
 
-            return executor.start({
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            return executor.start(fakeStartConfig).then(() => {
                 throw new Error('did not fail');
             }, (err) => {
                 assert.equal(err.message, returnMessage);
@@ -455,12 +431,7 @@ describe('index', () => {
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
 
-            return executor.start({
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            return executor.start(fakeStartConfig).then(() => {
                 throw new Error('did not fail');
             }, (err) => {
                 assert.equal(err.message, returnMessage);
@@ -480,12 +451,7 @@ describe('index', () => {
             requestRetryMock.withArgs(postConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
 
-            return executor.start({
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            return executor.start(fakeStartConfig).then(() => {
                 throw new Error('did not fail');
             }, (err) => {
                 assert.equal(err.message, returnMessage);
@@ -496,20 +462,43 @@ describe('index', () => {
             postConfig.body.command = [
                 '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 10800 15'
             ];
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 10800 };
 
-            return executor.start({
-                annotations: {
-                    'beta.screwdriver.cd/timeout': 10800
-                },
-                buildId: testBuildId,
-                container: testContainer,
-                token: testToken,
-                apiUri: testApiUri
-            }).then(() => {
+            return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
                 assert.calledWith(requestRetryMock.secondCall,
                     sinon.match(getConfig));
             });
+        });
+    });
+
+    describe('setNodeSelector', () => {
+        // eslint-disable-next-line no-underscore-dangle
+        const setNodeSelector = index.__get__('setNodeSelector');
+
+        let nodeSelectors;
+        let fakeConfig;
+
+        beforeEach(() => {
+            nodeSelectors = null;
+            fakeConfig = yaml.safeLoad(TEST_TIM_YAML);
+        });
+
+        it('does nothing if nodeSelector is not set', () => {
+            const updatedConfig = JSON.parse(JSON.stringify(fakeConfig));
+
+            setNodeSelector(fakeConfig, nodeSelectors);
+            assert.deepEqual(fakeConfig, updatedConfig);
+        });
+
+        it('updates config with tolerations', () => {
+            const updatedConfig = JSON.parse(JSON.stringify(fakeConfig));
+
+            updatedConfig.spec = testSpec;
+            nodeSelectors = { key: 'value' };
+
+            setNodeSelector(fakeConfig, nodeSelectors);
+            assert.deepEqual(fakeConfig, updatedConfig);
         });
     });
 });
