@@ -5,6 +5,7 @@ const mockery = require('mockery');
 const rewire = require('rewire');
 const sinon = require('sinon');
 const yaml = require('js-yaml');
+const _ = require('lodash');
 const index = rewire('../index.js');
 
 sinon.assert.expose(assert, { prefix: '' });
@@ -18,6 +19,19 @@ metadata:
   launchVersion: {{launcher_version}}
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_timeout}} {{build_id}}"
+spec:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - test
 `;
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
@@ -52,6 +66,54 @@ describe('index', () => {
                         }]
                     }]
                 }
+            }
+        }
+    };
+    const testPreferredSpec = {
+        affinity: {
+            nodeAffinity: {
+                preferredDuringSchedulingIgnoredDuringExecution: [
+                    {
+                        weight: 100,
+                        preference: {
+                            matchExpressions: [
+                                {
+                                    key: 'key',
+                                    operator: 'In',
+                                    values: ['value']
+                                },
+                                {
+                                    key: 'foo',
+                                    operator: 'In',
+                                    values: ['bar']
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    };
+    const testPodSpec = {
+        affinity: {
+            podAntiAffinity: {
+                preferredDuringSchedulingIgnoredDuringExecution: [
+                    {
+                        weight: 100,
+                        podAffinityTerm: {
+                            topologyKey: 'kubernetes.io/hostname',
+                            labelSelector: {
+                                matchExpressions: [
+                                    {
+                                        key: 'app',
+                                        operator: 'In',
+                                        values: ['test']
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
             }
         }
     };
@@ -285,6 +347,7 @@ describe('index', () => {
                         container: testContainer,
                         launchVersion: testLaunchVersion
                     },
+                    spec: testPodSpec,
                     command: [
                         '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 90 '
                         + '15'
@@ -357,7 +420,9 @@ describe('index', () => {
         });
 
         it('sets tolerations and node affinity with appropriate node config', () => {
-            postConfig.body.spec = testSpec;
+            const spec = _.merge({}, testSpec, testPodSpec);
+
+            postConfig.body.spec = spec;
 
             executor = new Executor({
                 ecosystem: {
@@ -372,6 +437,59 @@ describe('index', () => {
                     baseImage: 'hyperctl'
                 },
                 prefix: 'beta_'
+            });
+
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
+
+        it('sets preferred node affinity with appropriate node config', () => {
+            const spec = _.merge({}, testPreferredSpec, testPodSpec);
+
+            postConfig.body.spec = spec;
+
+            executor = new Executor({
+                ecosystem: {
+                    api: testApiUri,
+                    store: testStoreUri
+                },
+                fusebox: { retry: { minTimeout: 1 } },
+                prefix: 'beta_',
+                kubernetes: {
+                    preferredNodeSelectors: { key: 'value', foo: 'bar' }
+                }
+            });
+
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
+
+        it('sets node affinity and preferred node affinity', () => {
+            const spec = _.merge({}, testSpec, testPreferredSpec, testPodSpec);
+
+            postConfig.body.spec = spec;
+
+            executor = new Executor({
+                ecosystem: {
+                    api: testApiUri,
+                    store: testStoreUri
+                },
+                fusebox: { retry: { minTimeout: 1 } },
+                prefix: 'beta_',
+                kubernetes: {
+                    nodeSelectors: { key: 'value' },
+                    preferredNodeSelectors: { key: 'value', foo: 'bar' }
+                }
             });
 
             getConfig.retryStrategy = executor.podRetryStrategy;
@@ -493,11 +611,43 @@ describe('index', () => {
 
         it('updates config with tolerations', () => {
             const updatedConfig = JSON.parse(JSON.stringify(fakeConfig));
+            const spec = _.merge({}, testSpec, testPodSpec);
 
-            updatedConfig.spec = testSpec;
+            updatedConfig.spec = spec;
             nodeSelectors = { key: 'value' };
 
             setNodeSelector(fakeConfig, nodeSelectors);
+            assert.deepEqual(fakeConfig, updatedConfig);
+        });
+    });
+
+    describe('setPreferredNodeSelector', () => {
+        // eslint-disable-next-line no-underscore-dangle
+        const setPreferredNodeSelector = index.__get__('setPreferredNodeSelector');
+
+        let nodeSelectors;
+        let fakeConfig;
+
+        beforeEach(() => {
+            nodeSelectors = null;
+            fakeConfig = yaml.safeLoad(TEST_TIM_YAML);
+        });
+
+        it('does nothing if preferredNodeSelector is not set', () => {
+            const updatedConfig = JSON.parse(JSON.stringify(fakeConfig));
+
+            setPreferredNodeSelector(fakeConfig, nodeSelectors);
+            assert.deepEqual(fakeConfig, updatedConfig);
+        });
+
+        it('updates config with preferred node settings', () => {
+            const updatedConfig = JSON.parse(JSON.stringify(fakeConfig));
+            const spec = _.merge({}, testPreferredSpec, testPodSpec);
+
+            updatedConfig.spec = spec;
+            nodeSelectors = { key: 'value', foo: 'bar' };
+
+            setPreferredNodeSelector(fakeConfig, nodeSelectors);
             assert.deepEqual(fakeConfig, updatedConfig);
         });
     });
