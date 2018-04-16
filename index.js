@@ -173,7 +173,9 @@ class K8sVMExecutor extends Executor {
         const annotations = hoek.reach(config, 'annotations', { default: {} });
         const cpuConfig = hoek.reach(config, 'annotations', { default: {} })[CPU_RESOURCE];
         const ramConfig = hoek.reach(config, 'annotations', { default: {} })[RAM_RESOURCE];
-        const buildTimeout = annotations[ANNOTATION_BUILD_TIMEOUT] || this.buildTimeout;
+        const buildTimeout = annotations[ANNOTATION_BUILD_TIMEOUT]
+            ? Math.min(annotations[ANNOTATION_BUILD_TIMEOUT], this.buildTimeout)
+            : this.buildTimeout;
         const CPU = (cpuConfig === 'HIGH') ? this.highCpu : this.lowCpu;
         const MEMORY = (ramConfig === 'HIGH') ? this.highMemory * 1024 : this.lowMemory * 1024;   // 12GB or 2GB
         const random = randomstring.generate({

@@ -582,14 +582,26 @@ describe('index', () => {
 
         it('sets the build timeout', () => {
             postConfig.body.command = [
-                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 10800 15'
+                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 45 15'
             ];
-            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 10800 };
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 45 };
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
+        it('uses cluster build timeout if user specified a higher timeout', () => {
+            executor.buildTimeout = 20;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 120 };
+            postConfig.body.command = [
+                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 20 15'
+            ];
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
     });
