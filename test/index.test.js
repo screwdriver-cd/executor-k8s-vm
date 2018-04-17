@@ -581,10 +581,12 @@ describe('index', () => {
         });
 
         it('sets the build timeout', () => {
+            const testTimeout = 45;
+
             postConfig.body.command = [
-                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 45 15'
+                `/opt/sd/launch http://api:8080 http://store:8080 abcdefg ${testTimeout} 15`
             ];
-            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 45 };
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': testTimeout };
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
@@ -596,7 +598,8 @@ describe('index', () => {
             executor.buildTimeout = 20;
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 120 };
             postConfig.body.command = [
-                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 20 15'
+                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg ' +
+                `${executor.buildTimeout} 15`
             ];
 
             return executor.start(fakeStartConfig).then(() => {
