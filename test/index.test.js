@@ -180,11 +180,13 @@ describe('index', () => {
                 resources: {
                     cpu: {
                         high: 8,
-                        low: 1
+                        low: 1,
+                        micro: 0.5
                     },
                     memory: {
                         high: 5,
-                        low: 1
+                        low: 2,
+                        micro: 1
                     }
                 }
             },
@@ -200,8 +202,10 @@ describe('index', () => {
         assert.equal(executor.jobsNamespace, 'baz');
         assert.equal(executor.highCpu, 8);
         assert.equal(executor.lowCpu, 1);
+        assert.equal(executor.microCpu, 0.5);
         assert.equal(executor.highMemory, 5);
-        assert.equal(executor.lowMemory, 1);
+        assert.equal(executor.lowMemory, 2);
+        assert.equal(executor.microMemory, 1);
     });
 
     it('allow empty options', () => {
@@ -215,8 +219,10 @@ describe('index', () => {
         assert.equal(executor.token, '');
         assert.equal(executor.highCpu, 6);
         assert.equal(executor.lowCpu, 2);
+        assert.equal(executor.microCpu, 0.5);
         assert.equal(executor.highMemory, 12);
         assert.equal(executor.lowMemory, 2);
+        assert.equal(executor.microMemory, 1);
     });
 
     it('extends base class', () => {
@@ -341,8 +347,8 @@ describe('index', () => {
                 method: 'POST',
                 body: {
                     metadata: {
-                        cpu: 2,
-                        memory: 2048,
+                        cpu: 0.5,
+                        memory: 1024,
                         name: 'beta_15',
                         container: testContainer,
                         launchVersion: testLaunchVersion
@@ -396,7 +402,7 @@ describe('index', () => {
         );
 
         it('sets the memory appropriately when ram is set to HIGH', () => {
-            postConfig.body.metadata.cpu = 2;
+            postConfig.body.metadata.cpu = 0.5;
             postConfig.body.metadata.memory = 12288;
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/ram': 'HIGH' };
 
@@ -409,7 +415,7 @@ describe('index', () => {
 
         it('sets the CPU appropriately when cpu is set to HIGH', () => {
             postConfig.body.metadata.cpu = 6;
-            postConfig.body.metadata.memory = 2048;
+            postConfig.body.metadata.memory = 1024;
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 'HIGH' };
 
             return executor.start(fakeStartConfig).then(() => {
