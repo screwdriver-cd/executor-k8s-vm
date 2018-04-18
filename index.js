@@ -181,7 +181,7 @@ class K8sVMExecutor extends Executor {
             LOW: this.lowCpu,
             MICRO: this.microCpu
         };
-        const CPU = (cpuConfig in cpuValues) ? cpuValues[cpuConfig] : cpuValues.MICRO;
+        const CPU = (cpuConfig in cpuValues) ? cpuValues[cpuConfig] : cpuValues.LOW;
 
         const memValues = {
             HIGH: this.highMemory,
@@ -189,7 +189,7 @@ class K8sVMExecutor extends Executor {
             MICRO: this.microMemory
         };
         const memConfig = annotations[RAM_RESOURCE];
-        const MEMORY_GB = (memConfig in memValues) ? memValues[memConfig] : memValues.MICRO;
+        const MEMORY_GB = (memConfig in memValues) ? memValues[memConfig] : memValues.LOW;
         const MEMORY = MEMORY_GB * 1024;
 
         const buildTimeout = annotations[ANNOTATION_BUILD_TIMEOUT] || this.buildTimeout;

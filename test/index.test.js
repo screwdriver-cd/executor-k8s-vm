@@ -347,8 +347,8 @@ describe('index', () => {
                 method: 'POST',
                 body: {
                     metadata: {
-                        cpu: 0.5,
-                        memory: 1024,
+                        cpu: 2,
+                        memory: 2048,
                         name: 'beta_15',
                         container: testContainer,
                         launchVersion: testLaunchVersion
@@ -402,7 +402,6 @@ describe('index', () => {
         );
 
         it('sets the memory appropriately when ram is set to HIGH', () => {
-            postConfig.body.metadata.cpu = 0.5;
             postConfig.body.metadata.memory = 12288;
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/ram': 'HIGH' };
 
@@ -413,10 +412,31 @@ describe('index', () => {
             });
         });
 
+        it('sets the memory appropriately when ram is set to MICRO', () => {
+            postConfig.body.metadata.memory = 1024;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/ram': 'MICRO' };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
+
         it('sets the CPU appropriately when cpu is set to HIGH', () => {
             postConfig.body.metadata.cpu = 6;
-            postConfig.body.metadata.memory = 1024;
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 'HIGH' };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
+
+        it('sets the CPU appropriately when cpu is set to MICRO', () => {
+            postConfig.body.metadata.cpu = 0.5;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 'MICRO' };
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
