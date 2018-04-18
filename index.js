@@ -115,10 +115,10 @@ class K8sVMExecutor extends Executor {
      * @param  {Number} [options.kubernetes.buildTimeout=90]          Number of minutes to allow a build to run before considering it is timed out
      * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
-     * @param  {Number} [options.kubernetes.resources.cpu.micro=1]  Value for LOW CPU (in cores)
+     * @param  {Number} [options.kubernetes.resources.cpu.micro=1]    Value for MICRO CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
-     * @param  {Number} [options.kubernetes.resources.memory.micro=1] Value for LOW memory (in GB)
+     * @param  {Number} [options.kubernetes.resources.memory.micro=1] Value for MICRO memory (in GB)
      * @param  {Number} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
      * @param  {Object} [options.kubernetes.nodeSelectors]            Object representing node label-value pairs
      * @param  {String} [options.launchVersion=stable]                Launcher container version to use
