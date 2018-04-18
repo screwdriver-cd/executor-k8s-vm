@@ -11,7 +11,7 @@ const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
-const DEFAULT_BUILD_TIMEOUT = 90;   // 90 minutes
+const DEFAULT_BUILD_TIMEOUT = 90; // 90 minutes
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
@@ -175,7 +175,7 @@ class K8sVMExecutor extends Executor {
         const ramConfig = hoek.reach(config, 'annotations', { default: {} })[RAM_RESOURCE];
         const buildTimeout = annotations[ANNOTATION_BUILD_TIMEOUT] || this.buildTimeout;
         const CPU = (cpuConfig === 'HIGH') ? this.highCpu : this.lowCpu;
-        const MEMORY = (ramConfig === 'HIGH') ? this.highMemory * 1024 : this.lowMemory * 1024;   // 12GB or 2GB
+        const MEMORY = (ramConfig === 'HIGH') ? this.highMemory * 1024 : this.lowMemory * 1024; // 12GB or 2GB
         const random = randomstring.generate({
             length: 5,
             charset: 'alphanumeric',
