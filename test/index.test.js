@@ -10,6 +10,8 @@ const index = rewire('../index.js');
 
 sinon.assert.expose(assert, { prefix: '' });
 
+const DEFAULT_BUILD_TIMEOUT = 90;
+const MAX_BUILD_TIMEOUT = 120;
 const TEST_TIM_YAML = `
 metadata:
   cpu: {{cpu}}
@@ -176,6 +178,7 @@ describe('index', () => {
         executor = new Executor({
             kubernetes: {
                 buildTimeout: 30,
+                maxBuildTimeout: 300,
                 nodeSelectors: {},
                 token: 'api_key2',
                 host: 'kubernetes2',
@@ -196,6 +199,7 @@ describe('index', () => {
             launchVersion: 'v1.2.3'
         });
         assert.equal(executor.buildTimeout, 30);
+        assert.equal(executor.maxBuildTimeout, 300);
         assert.equal(executor.baseImage, 'hyperctl');
         assert.equal(executor.prefix, 'beta_');
         assert.equal(executor.token, 'api_key2');
@@ -211,7 +215,8 @@ describe('index', () => {
     it('allow empty options', () => {
         fsMock.existsSync.returns(false);
         executor = new Executor();
-        assert.equal(executor.buildTimeout, 90);
+        assert.equal(executor.buildTimeout, DEFAULT_BUILD_TIMEOUT);
+        assert.equal(executor.maxBuildTimeout, MAX_BUILD_TIMEOUT);
         assert.equal(executor.launchVersion, 'stable');
         assert.equal(executor.host, 'kubernetes.default');
         assert.equal(executor.launchVersion, 'stable');
@@ -353,8 +358,8 @@ describe('index', () => {
                     },
                     spec: testPodSpec,
                     command: [
-                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg 90 '
-                        + '15'
+                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                        + `${DEFAULT_BUILD_TIMEOUT} 15`
                     ]
                 },
                 headers: {
@@ -580,13 +585,11 @@ describe('index', () => {
             });
         });
 
-        it('sets the build timeout', () => {
-            const testTimeout = 45;
-
+        it('sets the build timeout to default build timeout if not configured by user', () => {
             postConfig.body.command = [
-                `/opt/sd/launch http://api:8080 http://store:8080 abcdefg ${testTimeout} 15`
+                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                + `${DEFAULT_BUILD_TIMEOUT} 15`
             ];
-            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': testTimeout };
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
@@ -594,12 +597,25 @@ describe('index', () => {
             });
         });
 
-        it('uses cluster build timeout if user specified a higher timeout', () => {
-            executor.buildTimeout = 20;
-            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 120 };
+        it('sets the build timeout if configured by user', () => {
+            const userTimeout = 45;
+
             postConfig.body.command = [
-                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg ' +
-                `${executor.buildTimeout} 15`
+                `/opt/sd/launch http://api:8080 http://store:8080 abcdefg ${userTimeout} 15`
+            ];
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': userTimeout };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
+        it('sets the timeout to maxBuildTimeout if user specified a higher timeout', () => {
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 220 };
+            postConfig.body.command = [
+                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                + `${MAX_BUILD_TIMEOUT} 15`
             ];
 
             return executor.start(fakeStartConfig).then(() => {
