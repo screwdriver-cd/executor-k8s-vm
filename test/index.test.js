@@ -180,8 +180,8 @@ describe('index', () => {
                 resources: {
                     cpu: {
                         high: 8,
-                        low: 1,
-                        micro: 0.5
+                        low: 2,
+                        micro: 1
                     },
                     memory: {
                         high: 5,
@@ -201,8 +201,8 @@ describe('index', () => {
         assert.equal(executor.launchVersion, 'v1.2.3');
         assert.equal(executor.jobsNamespace, 'baz');
         assert.equal(executor.highCpu, 8);
-        assert.equal(executor.lowCpu, 1);
-        assert.equal(executor.microCpu, 0.5);
+        assert.equal(executor.lowCpu, 2);
+        assert.equal(executor.microCpu, 1);
         assert.equal(executor.highMemory, 5);
         assert.equal(executor.lowMemory, 2);
         assert.equal(executor.microMemory, 1);
@@ -219,7 +219,7 @@ describe('index', () => {
         assert.equal(executor.token, '');
         assert.equal(executor.highCpu, 6);
         assert.equal(executor.lowCpu, 2);
-        assert.equal(executor.microCpu, 0.5);
+        assert.equal(executor.microCpu, 1);
         assert.equal(executor.highMemory, 12);
         assert.equal(executor.lowMemory, 2);
         assert.equal(executor.microMemory, 1);
@@ -435,7 +435,7 @@ describe('index', () => {
         });
 
         it('sets the CPU appropriately when cpu is set to MICRO', () => {
-            postConfig.body.metadata.cpu = 0.5;
+            postConfig.body.metadata.cpu = 1;
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 'MICRO' };
 
             return executor.start(fakeStartConfig).then(() => {

@@ -115,7 +115,7 @@ class K8sVMExecutor extends Executor {
      * @param  {Number} [options.kubernetes.buildTimeout=90]          Number of minutes to allow a build to run before considering it is timed out
      * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
-     * @param  {Number} [options.kubernetes.resources.cpu.micro=0.5]  Value for LOW CPU (in cores)
+     * @param  {Number} [options.kubernetes.resources.cpu.micro=1]  Value for LOW CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.micro=1] Value for LOW memory (in GB)
@@ -148,7 +148,7 @@ class K8sVMExecutor extends Executor {
         this.breaker = new Fusebox(requestretry, options.fusebox);
         this.highCpu = hoek.reach(options, 'kubernetes.resources.cpu.high', { default: 6 });
         this.lowCpu = hoek.reach(options, 'kubernetes.resources.cpu.low', { default: 2 });
-        this.microCpu = hoek.reach(options, 'kubernetes.resources.cpu.micro', { default: 0.5 });
+        this.microCpu = hoek.reach(options, 'kubernetes.resources.cpu.micro', { default: 1 });
         this.highMemory = hoek.reach(options, 'kubernetes.resources.memory.high', { default: 12 });
         this.lowMemory = hoek.reach(options, 'kubernetes.resources.memory.low', { default: 2 });
         this.microMemory = hoek.reach(options, 'kubernetes.resources.memory.micro', { default: 1 });
