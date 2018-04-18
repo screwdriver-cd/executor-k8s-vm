@@ -67,7 +67,8 @@ function setNodeSelector(podConfig, nodeSelectors) {
  * @param {Object} preferredNodeSelectors key-value pairs of preferred node selectors
  */
 function setPreferredNodeSelector(podConfig, preferredNodeSelectors) {
-    if (!preferredNodeSelectors || typeof preferredNodeSelectors !== 'object') {
+    if (!preferredNodeSelectors || typeof preferredNodeSelectors !== 'object' ||
+        !Object.keys(preferredNodeSelectors).length) {
         return;
     }
 
