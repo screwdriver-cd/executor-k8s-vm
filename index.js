@@ -11,8 +11,8 @@ const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
-const DEFAULT_BUILD_TIMEOUT = 90;   // 90 minutes
-const MAX_BUILD_TIMEOUT = 120;       // 120 minutes
+const DEFAULT_BUILD_TIMEOUT = 90; // 90 minutes
+const MAX_BUILD_TIMEOUT = 120; // 120 minutes
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
