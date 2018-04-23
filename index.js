@@ -11,7 +11,8 @@ const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const _ = require('lodash');
 
-const DEFAULT_BUILD_TIMEOUT = 90;   // 90 minutes
+const DEFAULT_BUILD_TIMEOUT = 90; // 90 minutes
+const MAX_BUILD_TIMEOUT = 120; // 120 minutes
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
@@ -67,7 +68,8 @@ function setNodeSelector(podConfig, nodeSelectors) {
  * @param {Object} preferredNodeSelectors key-value pairs of preferred node selectors
  */
 function setPreferredNodeSelector(podConfig, preferredNodeSelectors) {
-    if (!preferredNodeSelectors || typeof preferredNodeSelectors !== 'object') {
+    if (!preferredNodeSelectors || typeof preferredNodeSelectors !== 'object' ||
+        !Object.keys(preferredNodeSelectors).length) {
         return;
     }
 
@@ -113,6 +115,7 @@ class K8sVMExecutor extends Executor {
      * @param  {String} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
      * @param  {String} [options.kubernetes.baseImage]                Base image for the pod
      * @param  {Number} [options.kubernetes.buildTimeout=90]          Number of minutes to allow a build to run before considering it is timed out
+     * @param  {Number} [options.kubernetes.maxBuildTimeout=120]      Max timeout user can configure up to (in minutes)
      * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.micro=1]    Value for MICRO CPU (in cores)
@@ -144,6 +147,7 @@ class K8sVMExecutor extends Executor {
         this.jobsNamespace = this.kubernetes.jobsNamespace || 'default';
         this.baseImage = this.kubernetes.baseImage;
         this.buildTimeout = this.kubernetes.buildTimeout || DEFAULT_BUILD_TIMEOUT;
+        this.maxBuildTimeout = this.kubernetes.maxBuildTimeout || MAX_BUILD_TIMEOUT;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(requestretry, options.fusebox);
         this.highCpu = hoek.reach(options, 'kubernetes.resources.cpu.high', { default: 6 });
@@ -192,12 +196,14 @@ class K8sVMExecutor extends Executor {
         const MEMORY_GB = (memConfig in memValues) ? memValues[memConfig] : memValues.LOW;
         const MEMORY = MEMORY_GB * 1024;
 
-        const buildTimeout = annotations[ANNOTATION_BUILD_TIMEOUT] || this.buildTimeout;
         const random = randomstring.generate({
             length: 5,
             charset: 'alphanumeric',
             capitalization: 'lowercase'
         });
+        const buildTimeout = annotations[ANNOTATION_BUILD_TIMEOUT]
+            ? Math.min(annotations[ANNOTATION_BUILD_TIMEOUT], this.maxBuildTimeout)
+            : this.buildTimeout;
         const podTemplate = tinytim.renderFile(path.resolve(__dirname, './config/pod.yaml.tim'), {
             cpu: CPU,
             memory: MEMORY,
