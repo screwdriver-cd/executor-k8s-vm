@@ -118,8 +118,10 @@ class K8sVMExecutor extends Executor {
      * @param  {Number} [options.kubernetes.maxBuildTimeout=120]      Max timeout user can configure up to (in minutes)
      * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
+     * @param  {Number} [options.kubernetes.resources.cpu.micro=1]    Value for MICRO CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
+     * @param  {Number} [options.kubernetes.resources.memory.micro=1] Value for MICRO memory (in GB)
      * @param  {Number} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
      * @param  {Object} [options.kubernetes.nodeSelectors]            Object representing node label-value pairs
      * @param  {String} [options.launchVersion=stable]                Launcher container version to use
@@ -150,8 +152,10 @@ class K8sVMExecutor extends Executor {
         this.breaker = new Fusebox(requestretry, options.fusebox);
         this.highCpu = hoek.reach(options, 'kubernetes.resources.cpu.high', { default: 6 });
         this.lowCpu = hoek.reach(options, 'kubernetes.resources.cpu.low', { default: 2 });
+        this.microCpu = hoek.reach(options, 'kubernetes.resources.cpu.micro', { default: 1 });
         this.highMemory = hoek.reach(options, 'kubernetes.resources.memory.high', { default: 12 });
         this.lowMemory = hoek.reach(options, 'kubernetes.resources.memory.low', { default: 2 });
+        this.microMemory = hoek.reach(options, 'kubernetes.resources.memory.micro', { default: 1 });
         this.podRetryStrategy = (err, response, body) => {
             const status = hoek.reach(body, 'status.phase');
 
@@ -174,10 +178,24 @@ class K8sVMExecutor extends Executor {
      */
     _start(config) {
         const annotations = hoek.reach(config, 'annotations', { default: {} });
+
         const cpuConfig = hoek.reach(config, 'annotations', { default: {} })[CPU_RESOURCE];
-        const ramConfig = hoek.reach(config, 'annotations', { default: {} })[RAM_RESOURCE];
-        const CPU = (cpuConfig === 'HIGH') ? this.highCpu : this.lowCpu;
-        const MEMORY = (ramConfig === 'HIGH') ? this.highMemory * 1024 : this.lowMemory * 1024; // 12GB or 2GB
+        const cpuValues = {
+            HIGH: this.highCpu,
+            LOW: this.lowCpu,
+            MICRO: this.microCpu
+        };
+        const CPU = (cpuConfig in cpuValues) ? cpuValues[cpuConfig] : cpuValues.LOW;
+
+        const memValues = {
+            HIGH: this.highMemory,
+            LOW: this.lowMemory,
+            MICRO: this.microMemory
+        };
+        const memConfig = annotations[RAM_RESOURCE];
+        const MEMORY_GB = (memConfig in memValues) ? memValues[memConfig] : memValues.LOW;
+        const MEMORY = MEMORY_GB * 1024;
+
         const random = randomstring.generate({
             length: 5,
             charset: 'alphanumeric',
