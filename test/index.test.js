@@ -46,7 +46,7 @@ describe('index', () => {
     let fsMock;
     let executor;
     const testBuildId = 15;
-    const testToken = 'abcdefg';
+    let testToken = 'abcdefg';
     const testApiUri = 'http://api:8080';
     const testStoreUri = 'http://store:8080';
     const testContainer = 'node:4';
@@ -377,7 +377,7 @@ describe('index', () => {
                     },
                     spec: testPodSpec,
                     command: [
-                        '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                        '/opt/sd/launch http://api:8080 http://store:8080 someBuildToken '
                         + `${DEFAULT_BUILD_TIMEOUT} 15`
                     ]
                 },
@@ -415,7 +415,11 @@ describe('index', () => {
                 null, fakeGetResponse, fakeGetResponse.body);
 
             exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
-            exchangeTokenStub.resolves();
+            exchangeTokenStub.resolves('someBuildToken');
+        });
+
+        afterEach(() => {
+            testToken = 'abcdefg';
         });
 
         it('successfully calls start', () =>
@@ -490,7 +494,7 @@ describe('index', () => {
                 prefix: 'beta_'
             });
             exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
-            exchangeTokenStub.resolves();
+            exchangeTokenStub.resolves('someBuildToken');
 
             getConfig.retryStrategy = executor.podRetryStrategy;
 
@@ -519,7 +523,7 @@ describe('index', () => {
             });
 
             exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
-            exchangeTokenStub.resolves();
+            exchangeTokenStub.resolves('someBuildToken');
 
             getConfig.retryStrategy = executor.podRetryStrategy;
 
@@ -549,7 +553,7 @@ describe('index', () => {
             });
 
             exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
-            exchangeTokenStub.resolves();
+            exchangeTokenStub.resolves('someBuildToken');
 
             getConfig.retryStrategy = executor.podRetryStrategy;
 
@@ -637,7 +641,7 @@ describe('index', () => {
 
         it('sets the build timeout to default build timeout if not configured by user', () => {
             postConfig.body.command = [
-                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                '/opt/sd/launch http://api:8080 http://store:8080 someBuildToken '
                 + `${DEFAULT_BUILD_TIMEOUT} 15`
             ];
 
@@ -651,7 +655,7 @@ describe('index', () => {
             const userTimeout = 45;
 
             postConfig.body.command = [
-                `/opt/sd/launch http://api:8080 http://store:8080 abcdefg ${userTimeout} 15`
+                `/opt/sd/launch http://api:8080 http://store:8080 someBuildToken ${userTimeout} 15`
             ];
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': userTimeout };
 
@@ -664,7 +668,7 @@ describe('index', () => {
         it('sets the timeout to maxBuildTimeout if user specified a higher timeout', () => {
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/timeout': 220 };
             postConfig.body.command = [
-                '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
+                '/opt/sd/launch http://api:8080 http://store:8080 someBuildToken '
                 + `${MAX_BUILD_TIMEOUT} 15`
             ];
 
