@@ -10,6 +10,8 @@ const index = rewire('../index.js');
 
 sinon.assert.expose(assert, { prefix: '' });
 
+require('sinon-as-promised');
+
 const DEFAULT_BUILD_TIMEOUT = 90;
 const MAX_BUILD_TIMEOUT = 120;
 const TEST_TIM_YAML = `
@@ -341,6 +343,7 @@ describe('index', () => {
         let postConfig;
         let getConfig;
         let fakeStartConfig;
+        let exchangeTokenStub;
 
         const fakeStartResponse = {
             statusCode: 201,
@@ -410,6 +413,9 @@ describe('index', () => {
                 null, fakeStartResponse, fakeStartResponse.body);
             requestRetryMock.withArgs(sinon.match({ method: 'GET' })).yieldsAsync(
                 null, fakeGetResponse, fakeGetResponse.body);
+
+            exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
+            exchangeTokenStub.resolves();
         });
 
         it('successfully calls start', () =>
@@ -483,6 +489,8 @@ describe('index', () => {
                 },
                 prefix: 'beta_'
             });
+            exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
+            exchangeTokenStub.resolves();
 
             getConfig.retryStrategy = executor.podRetryStrategy;
 
@@ -510,6 +518,9 @@ describe('index', () => {
                 }
             });
 
+            exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
+            exchangeTokenStub.resolves();
+
             getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start(fakeStartConfig).then(() => {
@@ -536,6 +547,9 @@ describe('index', () => {
                     preferredNodeSelectors: { key: 'value', foo: 'bar' }
                 }
             });
+
+            exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
+            exchangeTokenStub.resolves();
 
             getConfig.retryStrategy = executor.podRetryStrategy;
 
