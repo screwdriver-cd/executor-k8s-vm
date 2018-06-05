@@ -264,15 +264,15 @@ class K8sVMExecutor extends Executor {
                 })
                 .then((resp) => {
                     if (resp.statusCode !== 200) {
-                        throw new Error(`Failed to get pod status:
-                            ${JSON.stringify(resp.body, null, 2)}`);
+                        throw new Error('Failed to get pod status:' +
+                            `${JSON.stringify(resp.body, null, 2)}`);
                     }
 
                     const status = resp.body.status.phase.toLowerCase();
 
                     if (status === 'failed' || status === 'unknown') {
-                        throw new Error(`Failed to create pod. Pod status is:
-                            ${JSON.stringify(resp.body.status, null, 2)}`);
+                        throw new Error('Failed to create pod. Pod status is:' +
+                            `${JSON.stringify(resp.body.status, null, 2)}`);
                     }
 
                     return null;

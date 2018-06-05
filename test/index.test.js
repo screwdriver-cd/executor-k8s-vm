@@ -10,8 +10,6 @@ const index = rewire('../index.js');
 
 sinon.assert.expose(assert, { prefix: '' });
 
-require('sinon-as-promised');
-
 const DEFAULT_BUILD_TIMEOUT = 90;
 const MAX_BUILD_TIMEOUT = 120;
 const TEST_TIM_YAML = `
@@ -584,8 +582,8 @@ describe('index', () => {
                     message: 'cannot get pod status'
                 }
             };
-            const returnMessage = `Failed to get pod status:
-                        ${JSON.stringify(returnResponse.body, null, 2)}`;
+            const returnMessage = 'Failed to get pod status:' +
+                        `${JSON.stringify(returnResponse.body, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
@@ -606,8 +604,8 @@ describe('index', () => {
                     }
                 }
             };
-            const returnMessage = `Failed to create pod. Pod status is:
-                        ${JSON.stringify(returnResponse.body.status, null, 2)}`;
+            const returnMessage = 'Failed to create pod. Pod status is:' +
+                        `${JSON.stringify(returnResponse.body.status, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
