@@ -64,7 +64,7 @@ spec:
   initContainers:
   - name: launcher
     image: screwdrivercd/launcher:{{launcher_version}}
-    command: ['/bin/sh', '-c', 'cp -a /opt/sd/* /opt/launcher']
+    command: ['/bin/sh', '-c', 'cp -a /opt/sd/* /opt/launcher && mkdir -p /opt/launcher/hab && cp -a /hab/* /opt/launcher/hab']
     volumeMounts:
     - mountPath: /opt/launcher
       name: sdlauncher
