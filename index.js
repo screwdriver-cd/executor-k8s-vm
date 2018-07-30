@@ -205,79 +205,74 @@ class K8sVMExecutor extends Executor {
             ? Math.min(annotations[ANNOTATION_BUILD_TIMEOUT], this.maxBuildTimeout)
             : this.buildTimeout;
 
-        // exchange temporal JWT to build JWT
-        return this.exchangeTokenForBuild(config, buildTimeout).then((buildToken) => {
-            config.token = buildToken;
+        const podTemplate = tinytim.renderFile(
+            path.resolve(__dirname, './config/pod.yaml.tim'), {
+                cpu: CPU,
+                memory: MEMORY,
+                pod_name: `${this.prefix}${config.buildId}-${random}`,
+                build_id_with_prefix: `${this.prefix}${config.buildId}`,
+                build_id: config.buildId,
+                build_timeout: buildTimeout,
+                container: config.container,
+                api_uri: this.ecosystem.api,
+                store_uri: this.ecosystem.store,
+                pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
+                token: config.token,
+                launcher_version: this.launchVersion,
+                base_image: this.baseImage
+            });
 
-            const podTemplate = tinytim.renderFile(
-                path.resolve(__dirname, './config/pod.yaml.tim'), {
-                    cpu: CPU,
-                    memory: MEMORY,
-                    pod_name: `${this.prefix}${config.buildId}-${random}`,
-                    build_id_with_prefix: `${this.prefix}${config.buildId}`,
-                    build_id: config.buildId,
-                    build_timeout: buildTimeout,
-                    container: config.container,
-                    api_uri: this.ecosystem.api,
-                    store_uri: this.ecosystem.store,
-                    pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
-                    token: config.token,
-                    launcher_version: this.launchVersion,
-                    base_image: this.baseImage
-                });
+        const podConfig = yaml.safeLoad(podTemplate);
 
-            const podConfig = yaml.safeLoad(podTemplate);
+        setNodeSelector(podConfig, this.nodeSelectors);
+        setPreferredNodeSelector(podConfig, this.preferredNodeSelectors);
 
-            setNodeSelector(podConfig, this.nodeSelectors);
-            setPreferredNodeSelector(podConfig, this.preferredNodeSelectors);
+        const options = {
+            uri: this.podsUrl,
+            method: 'POST',
+            body: podConfig,
+            headers: { Authorization: `Bearer ${this.token}` },
+            strictSSL: false,
+            json: true
+        };
 
-            const options = {
-                uri: this.podsUrl,
-                method: 'POST',
-                body: podConfig,
-                headers: { Authorization: `Bearer ${this.token}` },
-                strictSSL: false,
-                json: true
-            };
+        return this.breaker.runCommand(options)
+            .then((resp) => {
+                if (resp.statusCode !== 201) {
+                    throw new Error(`Failed to create pod: ${JSON.stringify(resp.body)}`);
+                }
 
-            return this.breaker.runCommand(options)
-                .then((resp) => {
-                    if (resp.statusCode !== 201) {
-                        throw new Error(`Failed to create pod: ${JSON.stringify(resp.body)}`);
-                    }
+                return resp.body.metadata.name;
+            })
+            .then((podname) => {
+                const statusOptions = {
+                    uri: `${this.podsUrl}/${podname}/status`,
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${this.token}` },
+                    strictSSL: false,
+                    maxAttempts: MAXATTEMPTS,
+                    retryDelay: RETRYDELAY,
+                    retryStrategy: this.podRetryStrategy,
+                    json: true
+                };
 
-                    return resp.body.metadata.name;
-                })
-                .then((podname) => {
-                    const statusOptions = {
-                        uri: `${this.podsUrl}/${podname}/status`,
-                        method: 'GET',
-                        headers: { Authorization: `Bearer ${this.token}` },
-                        strictSSL: false,
-                        maxAttempts: MAXATTEMPTS,
-                        retryDelay: RETRYDELAY,
-                        retryStrategy: this.podRetryStrategy,
-                        json: true
-                    };
+                return this.breaker.runCommand(statusOptions);
+            })
+            .then((resp) => {
+                if (resp.statusCode !== 200) {
+                    throw new Error('Failed to get pod status:' +
+                        `${JSON.stringify(resp.body, null, 2)}`);
+                }
 
-                    return this.breaker.runCommand(statusOptions);
-                })
-                .then((resp) => {
-                    if (resp.statusCode !== 200) {
-                        throw new Error('Failed to get pod status:' +
-                            `${JSON.stringify(resp.body, null, 2)}`);
-                    }
+                const status = resp.body.status.phase.toLowerCase();
 
-                    const status = resp.body.status.phase.toLowerCase();
+                if (status === 'failed' || status === 'unknown') {
+                    throw new Error('Failed to create pod. Pod status is:' +
+                        `${JSON.stringify(resp.body.status, null, 2)}`);
+                }
 
-                    if (status === 'failed' || status === 'unknown') {
-                        throw new Error('Failed to create pod. Pod status is:' +
-                            `${JSON.stringify(resp.body.status, null, 2)}`);
-                    }
-
-                    return null;
-                });
-        });
+                return null;
+            });
     }
 
     /**
