@@ -1,7 +1,7 @@
 'use strict';
 
 const Executor = require('screwdriver-executor-base');
-const Fusebox = require('circuit-fuses');
+const Fusebox = require('circuit-fuses').breaker;
 const fs = require('fs');
 const hoek = require('hoek');
 const path = require('path');

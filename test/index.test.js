@@ -341,7 +341,6 @@ describe('index', () => {
         let postConfig;
         let getConfig;
         let fakeStartConfig;
-        let exchangeTokenStub;
 
         const fakeStartResponse = {
             statusCode: 201,
@@ -510,9 +509,6 @@ describe('index', () => {
                     preferredNodeSelectors: { key: 'value', foo: 'bar' }
                 }
             });
-
-            exchangeTokenStub = sinon.stub(executor, 'exchangeTokenForBuild');
-            exchangeTokenStub.resolves('someBuildToken');
 
             getConfig.retryStrategy = executor.podRetryStrategy;
 

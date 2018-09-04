@@ -50,14 +50,14 @@
         "sinon": "^5.0.10"
     },
     "dependencies": {
-        "circuit-fuses": "^2.1.0",
-        "eslint-plugin-import": "^2.11.0",
-        "hoek": "^5.0.3",
+        "circuit-fuses": "^4.0.0",
+        "eslint-plugin-import": "^2.14.0",
+        "hoek": "^5.0.4",
         "js-yaml": "^3.12.0",
         "lodash": "^4.17.10",
         "randomstring": "^1.1.5",
         "requestretry": "^1.13.0",
-        "screwdriver-executor-base": "^6.1.0",
+        "screwdriver-executor-base": "^6.2.0",
         "tinytim": "^0.1.1"
     }
 }
