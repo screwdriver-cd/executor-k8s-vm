@@ -28,7 +28,8 @@ spec:
       privileged: true
     resources:
       limits:
-        memory: 2Gi
+        cpu: "{{cpu}}"
+        memory: {{memory}}Mi
     command: ["/sd/hyper-runner.sh"]
     args: [
          "--cpu", "{{cpu}}",
