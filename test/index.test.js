@@ -71,6 +71,40 @@ describe('index', () => {
             }
         }
     };
+    const testSpecWithDisk = {
+        tolerations: [{
+            key: 'disk',
+            value: 'high',
+            effect: 'NoSchedule',
+            operator: 'Equal'
+        }, {
+            key: 'key',
+            value: 'value',
+            effect: 'NoSchedule',
+            operator: 'Equal'
+        }],
+        affinity: {
+            nodeAffinity: {
+                requiredDuringSchedulingIgnoredDuringExecution: {
+                    nodeSelectorTerms: [
+                        {
+                            matchExpressions: [{
+                                key: 'disk',
+                                operator: 'In',
+                                values: ['high']
+                            }]
+                        }, {
+                            matchExpressions: [{
+                                key: 'key',
+                                operator: 'In',
+                                values: ['value']
+                            }]
+                        }
+                    ]
+                }
+            }
+        }
+    };
     const testPreferredSpec = {
         affinity: {
             nodeAffinity: {
@@ -466,6 +500,36 @@ describe('index', () => {
 
         it('sets tolerations and node affinity with appropriate node config', () => {
             const spec = _.merge({}, testSpec, testPodSpec);
+
+            postConfig.body.spec = spec;
+
+            executor = new Executor({
+                ecosystem: {
+                    api: testApiUri,
+                    store: testStoreUri
+                },
+                fusebox: { retry: { minTimeout: 1 } },
+                kubernetes: {
+                    nodeSelectors: { key: 'value' },
+                    token: 'api_key',
+                    host: 'kubernetes.default',
+                    baseImage: 'hyperctl'
+                },
+                prefix: 'beta_'
+            });
+
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall,
+                    sinon.match(getConfig));
+            });
+        });
+
+        it('sets disk toleration and node affinity when disk is HIGH', () => {
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/disk': 'HIGH' };
+            const spec = _.merge({}, testSpecWithDisk, testPodSpec);
 
             postConfig.body.spec = spec;
 

@@ -17,6 +17,7 @@ const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
 const RAM_RESOURCE = 'beta.screwdriver.cd/ram';
+const DISK_RESOURCE = 'beta.screwdriver.cd/disk';
 const ANNOTATION_BUILD_TIMEOUT = 'beta.screwdriver.cd/timeout';
 const TOLERATIONS_PATH = 'spec.tolerations';
 const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
@@ -224,7 +225,12 @@ class K8sVMExecutor extends Executor {
 
         const podConfig = yaml.safeLoad(podTemplate);
 
-        setNodeSelector(podConfig, this.nodeSelectors);
+        const diskConfig = annotations[DISK_RESOURCE] || '';
+        const nodeSelectors = diskConfig.toUpperCase() === 'HIGH' ? { disk: 'high' } : {};
+
+        hoek.merge(nodeSelectors, this.nodeSelectors);
+
+        setNodeSelector(podConfig, nodeSelectors);
         setPreferredNodeSelector(podConfig, this.preferredNodeSelectors);
 
         const options = {
