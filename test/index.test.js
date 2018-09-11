@@ -374,6 +374,7 @@ describe('index', () => {
     describe('start', () => {
         let postConfig;
         let getConfig;
+        let putConfig;
         let fakeStartConfig;
 
         const fakeStartResponse = {
@@ -430,6 +431,21 @@ describe('index', () => {
                 retryDelay: RETRYDELAY,
                 // eslint-disable-next-line
                 retryStrategy: executor.podRetryStrategy
+            };
+
+            putConfig = {
+                uri: `${testApiUri}/v4/builds/${testBuildId}`,
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${testToken}`
+                },
+                body: {
+                    statusMessage: 'Waiting for resources to be available.'
+                },
+                strictSSL: false,
+                maxAttempts: MAXATTEMPTS,
+                retryDelay: RETRYDELAY,
+                json: true
             };
 
             fakeStartConfig = {
@@ -644,6 +660,52 @@ describe('index', () => {
         });
 
         it('returns error when pod status is failed', () => {
+            const returnResponse = {
+                statusCode: 200,
+                body: {
+                    status: {
+                        phase: 'failed'
+                    }
+                }
+            };
+            const returnMessage = 'Failed to create pod. Pod status is:' +
+                        `${JSON.stringify(returnResponse.body.status, null, 2)}`;
+
+            requestRetryMock.withArgs(getConfig).yieldsAsync(
+                null, returnResponse, returnResponse.body);
+
+            return executor.start(fakeStartConfig).then(() => {
+                throw new Error('did not fail');
+            }, (err) => {
+                assert.equal(err.message, returnMessage);
+            });
+        });
+
+        it('update build status message when pod status is pending', () => {
+            const returnResponse = {
+                statusCode: 200,
+                body: {
+                    status: {
+                        phase: 'pending'
+                    }
+                }
+            };
+
+            const returnResponseFromSDAPI = { statusCode: 200 };
+
+            requestRetryMock.withArgs(getConfig).yieldsAsync(
+                null, returnResponse, returnResponse.body);
+
+            requestRetryMock.withArgs(putConfig).yieldsAsync(
+                null, returnResponseFromSDAPI);
+
+            return executor.start(fakeStartConfig).then((resp) => {
+                assert.calledWith(requestRetryMock, putConfig);
+                assert.deepEqual(resp.statusCode, 200);
+            });
+        });
+
+        it('sets error when pod status is failed', () => {
             const returnResponse = {
                 statusCode: 200,
                 body: {

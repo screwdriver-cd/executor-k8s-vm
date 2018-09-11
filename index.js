@@ -168,6 +168,32 @@ class K8sVMExecutor extends Executor {
     }
 
     /**
+     * Update build status message
+     * @method updateStatusMessage
+     * @param  {Object}          config                 build config of the job
+     * @param  {String}          config.apiUri          screwdriver base api uri
+     * @param  {Number}          config.buildId         build id
+     * @param  {String}          config.statusMessage   build status message
+     * @param  {String}          config.token           build temporal jwt token
+     * @return {Promise}
+     */
+    updateStatusMessage(config) {
+        const { apiUri, buildId, statusMessage, token } = config;
+        const statusMessageOptions = {
+            json: true,
+            method: 'PUT',
+            uri: `${apiUri}/v4/builds/${buildId}`,
+            body: { statusMessage },
+            headers: { Authorization: `Bearer ${token}` },
+            strictSSL: false,
+            maxAttempts: MAXATTEMPTS,
+            retryDelay: RETRYDELAY
+        };
+
+        return this.breaker.runCommand(statusMessageOptions);
+    }
+
+    /**
      * Starts a k8s build
      * @method start
      * @param  {Object}   config                A configuration object
@@ -275,6 +301,15 @@ class K8sVMExecutor extends Executor {
                 if (status === 'failed' || status === 'unknown') {
                     throw new Error('Failed to create pod. Pod status is:' +
                         `${JSON.stringify(resp.body.status, null, 2)}`);
+                }
+
+                if (status === 'pending') {
+                    return this.updateStatusMessage({
+                        apiUri: this.ecosystem.api,
+                        buildId: config.buildId,
+                        statusMessage: 'Waiting for resources to be available.',
+                        token: config.token
+                    });
                 }
 
                 return null;
