@@ -43,21 +43,21 @@
     "devDependencies": {
         "chai": "^3.5.0",
         "eslint": "^4.19.1",
-        "eslint-config-screwdriver": "^3.0.0",
+        "eslint-config-screwdriver": "^3.0.1",
         "jenkins-mocha": "^4.0.0",
         "mockery": "^2.0.0",
         "rewire": "^3.0.2",
         "sinon": "^5.0.10"
     },
     "dependencies": {
-        "circuit-fuses": "^4.0.0",
+        "circuit-fuses": "^4.0.3",
         "eslint-plugin-import": "^2.14.0",
         "hoek": "^5.0.4",
         "js-yaml": "^3.12.0",
         "lodash": "^4.17.10",
         "randomstring": "^1.1.5",
         "requestretry": "^1.13.0",
-        "screwdriver-executor-base": "^6.2.0",
+        "screwdriver-executor-base": "^6.2.1",
         "tinytim": "^0.1.1"
     }
 }
