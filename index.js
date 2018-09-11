@@ -15,10 +15,10 @@ const DEFAULT_BUILD_TIMEOUT = 90; // 90 minutes
 const MAX_BUILD_TIMEOUT = 120; // 120 minutes
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
-const CPU_RESOURCE = 'beta.screwdriver.cd/cpu';
-const RAM_RESOURCE = 'beta.screwdriver.cd/ram';
-const DISK_RESOURCE = 'beta.screwdriver.cd/disk';
-const ANNOTATION_BUILD_TIMEOUT = 'beta.screwdriver.cd/timeout';
+const CPU_RESOURCE = 'cpu';
+const RAM_RESOURCE = 'ram';
+const DISK_RESOURCE = 'disk';
+const ANNOTATION_BUILD_TIMEOUT = 'timeout';
 const TOLERATIONS_PATH = 'spec.tolerations';
 const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
     'requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms';
@@ -204,9 +204,9 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
-        const annotations = hoek.reach(config, 'annotations', { default: {} });
-
-        const cpuConfig = hoek.reach(config, 'annotations', { default: {} })[CPU_RESOURCE];
+        const annotations = this.parseAnnotations(
+            hoek.reach(config, 'annotations', { default: {} }));
+        const cpuConfig = annotations[CPU_RESOURCE];
         const cpuValues = {
             HIGH: this.highCpu,
             LOW: this.lowCpu,
