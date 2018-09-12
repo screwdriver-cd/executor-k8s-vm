@@ -252,7 +252,8 @@ class K8sVMExecutor extends Executor {
         const podConfig = yaml.safeLoad(podTemplate);
 
         const diskConfig = annotations[DISK_RESOURCE] || '';
-        const nodeSelectors = diskConfig.toUpperCase() === 'HIGH' ? { disk: 'high' } : {};
+        const nodeSelectors = diskConfig.toUpperCase() === 'HIGH' ?
+            { 'screwdriver.cd/disk': 'high' } : {};
 
         hoek.merge(nodeSelectors, this.nodeSelectors);
 

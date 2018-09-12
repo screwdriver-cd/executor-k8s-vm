@@ -73,7 +73,7 @@ describe('index', () => {
     };
     const testSpecWithDisk = {
         tolerations: [{
-            key: 'disk',
+            key: 'screwdriver.cd/disk',
             value: 'high',
             effect: 'NoSchedule',
             operator: 'Equal'
@@ -89,7 +89,7 @@ describe('index', () => {
                     nodeSelectorTerms: [
                         {
                             matchExpressions: [{
-                                key: 'disk',
+                                key: 'screwdriver.cd/disk',
                                 operator: 'In',
                                 values: ['high']
                             }]
@@ -544,7 +544,7 @@ describe('index', () => {
         });
 
         it('sets disk toleration and node affinity when disk is HIGH', () => {
-            fakeStartConfig.annotations = { 'beta.screwdriver.cd/disk': 'HIGH' };
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/disk': 'high' };
             const spec = _.merge({}, testSpecWithDisk, testPodSpec);
 
             postConfig.body.spec = spec;
