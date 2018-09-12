@@ -57,7 +57,7 @@
         "lodash": "^4.17.10",
         "randomstring": "^1.1.5",
         "requestretry": "^1.13.0",
-        "screwdriver-executor-base": "^6.2.1",
+        "screwdriver-executor-base": "^6.2.2",
         "tinytim": "^0.1.1"
     }
 }
