@@ -123,6 +123,7 @@ class K8sVMExecutor extends Executor {
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.micro=1] Value for MICRO memory (in GB)
+     * @param  {Number} [options.kubernetes.resources.disk.high]      Value for disk HIGH label
      * @param  {Number} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
      * @param  {Object} [options.kubernetes.nodeSelectors]            Object representing node label-value pairs
      * @param  {String} [options.launchVersion=stable]                Launcher container version to use
@@ -157,8 +158,7 @@ class K8sVMExecutor extends Executor {
         this.highMemory = hoek.reach(options, 'kubernetes.resources.memory.high', { default: 12 });
         this.lowMemory = hoek.reach(options, 'kubernetes.resources.memory.low', { default: 2 });
         this.microMemory = hoek.reach(options, 'kubernetes.resources.memory.micro', { default: 1 });
-        this.diskLabel = hoek.reach(options, 'kubernetes.labels.disk',
-            { default: 'screwdriver.cd/disk' });
+        this.diskLabel = hoek.reach(options, 'kubernetes.resources.disk.high', { default: '' });
         this.podRetryStrategy = (err, response, body) => {
             const status = hoek.reach(body, 'status.phase');
 
@@ -253,13 +253,18 @@ class K8sVMExecutor extends Executor {
 
         const podConfig = yaml.safeLoad(podTemplate);
 
-        const diskConfig = annotations[DISK_RESOURCE] || '';
-        const nodeSelectors = diskConfig.toUpperCase() === 'HIGH' ?
-            { [this.diskLabel]: 'high' } : {};
+        if (this.diskLabel) {
+            const diskConfig = annotations[DISK_RESOURCE] || '';
+            const nodeSelectors = diskConfig.toUpperCase() === 'HIGH' ?
+                { [this.diskLabel]: 'high' } : {};
 
-        hoek.merge(nodeSelectors, this.nodeSelectors);
+            hoek.merge(nodeSelectors, this.nodeSelectors);
 
-        setNodeSelector(podConfig, nodeSelectors);
+            setNodeSelector(podConfig, nodeSelectors);
+        } else {
+            setNodeSelector(podConfig, this.nodeSelectors);
+        }
+
         setPreferredNodeSelector(podConfig, this.preferredNodeSelectors);
 
         const options = {

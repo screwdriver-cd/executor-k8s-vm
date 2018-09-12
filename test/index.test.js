@@ -559,7 +559,12 @@ describe('index', () => {
                     nodeSelectors: { key: 'value' },
                     token: 'api_key',
                     host: 'kubernetes.default',
-                    baseImage: 'hyperctl'
+                    baseImage: 'hyperctl',
+                    resources: {
+                        disk: {
+                            high: 'screwdriver.cd/disk'
+                        }
+                    }
                 },
                 prefix: 'beta_'
             });
