@@ -157,6 +157,8 @@ class K8sVMExecutor extends Executor {
         this.highMemory = hoek.reach(options, 'kubernetes.resources.memory.high', { default: 12 });
         this.lowMemory = hoek.reach(options, 'kubernetes.resources.memory.low', { default: 2 });
         this.microMemory = hoek.reach(options, 'kubernetes.resources.memory.micro', { default: 1 });
+        this.diskLabel = hoek.reach(options, 'kubernetes.labels.disk',
+            { default: 'screwdriver.cd/disk' });
         this.podRetryStrategy = (err, response, body) => {
             const status = hoek.reach(body, 'status.phase');
 
@@ -253,7 +255,7 @@ class K8sVMExecutor extends Executor {
 
         const diskConfig = annotations[DISK_RESOURCE] || '';
         const nodeSelectors = diskConfig.toUpperCase() === 'HIGH' ?
-            { 'screwdriver.cd/disk': 'high' } : {};
+            { [this.diskLabel]: 'high' } : {};
 
         hoek.merge(nodeSelectors, this.nodeSelectors);
 
