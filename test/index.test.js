@@ -92,9 +92,7 @@ describe('index', () => {
                                 key: 'screwdriver.cd/disk',
                                 operator: 'In',
                                 values: ['high']
-                            }]
-                        }, {
-                            matchExpressions: [{
+                            }, {
                                 key: 'key',
                                 operator: 'In',
                                 values: ['value']
