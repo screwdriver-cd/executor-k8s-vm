@@ -115,9 +115,11 @@ class K8sVMExecutor extends Executor {
      * @param  {String} [options.kubernetes.baseImage]                Base image for the pod
      * @param  {Number} [options.kubernetes.buildTimeout=90]          Number of minutes to allow a build to run before considering it is timed out
      * @param  {Number} [options.kubernetes.maxBuildTimeout=120]      Max timeout user can configure up to (in minutes)
+     * @param  {String} [options.kubernetes.resources.cpu.turbo=12]   Value for TURBO CPU (in cores)
      * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
      * @param  {Number} [options.kubernetes.resources.cpu.micro=1]    Value for MICRO CPU (in cores)
+     * @param  {Number} [options.kubernetes.resources.memory.turbo=16]Value for TURBO memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.micro=1] Value for MICRO memory (in GB)
@@ -150,9 +152,12 @@ class K8sVMExecutor extends Executor {
         this.maxBuildTimeout = this.kubernetes.maxBuildTimeout || MAX_BUILD_TIMEOUT;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(requestretry, options.fusebox);
+        this.turboCpu = hoek.reach(options, 'kubernetes.resources.cpu.turbo', { default: 12 });
         this.highCpu = hoek.reach(options, 'kubernetes.resources.cpu.high', { default: 6 });
         this.lowCpu = hoek.reach(options, 'kubernetes.resources.cpu.low', { default: 2 });
         this.microCpu = hoek.reach(options, 'kubernetes.resources.cpu.micro', { default: 1 });
+        this.turboMemory = hoek.reach(options,
+            'kubernetes.resources.memory.turbo', { default: 16 });
         this.highMemory = hoek.reach(options, 'kubernetes.resources.memory.high', { default: 12 });
         this.lowMemory = hoek.reach(options, 'kubernetes.resources.memory.low', { default: 2 });
         this.microMemory = hoek.reach(options, 'kubernetes.resources.memory.micro', { default: 1 });
@@ -208,6 +213,7 @@ class K8sVMExecutor extends Executor {
             hoek.reach(config, 'annotations', { default: {} }));
         const cpuConfig = annotations[CPU_RESOURCE];
         const cpuValues = {
+            TURBO: this.turboCpu,
             HIGH: this.highCpu,
             LOW: this.lowCpu,
             MICRO: this.microCpu
@@ -215,6 +221,7 @@ class K8sVMExecutor extends Executor {
         const CPU = (cpuConfig in cpuValues) ? cpuValues[cpuConfig] : cpuValues.LOW;
 
         const memValues = {
+            TURBO: this.turboMemory,
             HIGH: this.highMemory,
             LOW: this.lowMemory,
             MICRO: this.microMemory

@@ -218,11 +218,13 @@ describe('index', () => {
                 baseImage: 'hyperctl',
                 resources: {
                     cpu: {
+                        turbo: 10,
                         high: 8,
                         low: 2,
                         micro: 1
                     },
                     memory: {
+                        turbo: 20,
                         high: 5,
                         low: 2,
                         micro: 1
@@ -240,9 +242,11 @@ describe('index', () => {
         assert.equal(executor.host, 'kubernetes2');
         assert.equal(executor.launchVersion, 'v1.2.3');
         assert.equal(executor.jobsNamespace, 'baz');
+        assert.equal(executor.turboCpu, 10);
         assert.equal(executor.highCpu, 8);
         assert.equal(executor.lowCpu, 2);
         assert.equal(executor.microCpu, 1);
+        assert.equal(executor.turboMemory, 20);
         assert.equal(executor.highMemory, 5);
         assert.equal(executor.lowMemory, 2);
         assert.equal(executor.microMemory, 1);
