@@ -20,6 +20,7 @@ The class provides a couple options that are configurable in the instantiation o
 | config.kubernetes.host | String | 'kubernetes.defaults' | The hostname for the Kubernetes cluster (kubernetes) |
 | config.kubernetes.nodeSelectors| Object | | Object representing node label-value pairs https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#step-one-attach-label-to-the-node|
 | config.ecosystem | Object | | Screwdriver Ecosystem (ui, api, store, pushgateway, etc.) |
+| config.launchImage | String | 'screwdrivercd/launcher' | Launcher image to use |
 | config.launchVersion | String | 'stable' | Launcher container version to use (stable) |
 | config.prefix | String | '' |Prefix to container names ("") |
 | config.jobsNamespace | String | 'default' | Kubernetes namespace where builds are running on |

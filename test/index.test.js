@@ -18,7 +18,7 @@ metadata:
   memory: {{memory}}
   name: {{build_id_with_prefix}}
   container: {{container}}
-  launchVersion: {{launcher_version}}
+  launchImage: {{launcher_image}}
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_timeout}} {{build_id}}"
 spec:
@@ -48,6 +48,7 @@ describe('index', () => {
     const testApiUri = 'http://api:8080';
     const testStoreUri = 'http://store:8080';
     const testContainer = 'node:4';
+    const testLaunchImage = 'screwdrivercd/launcher';
     const testLaunchVersion = 'stable';
     const podsUrl = 'https://kubernetes.default/api/v1/namespaces/default/pods';
     const testSpec = {
@@ -407,7 +408,7 @@ describe('index', () => {
                         memory: 2048,
                         name: 'beta_15',
                         container: testContainer,
-                        launchVersion: testLaunchVersion
+                        launchImage: `${testLaunchImage}:${testLaunchVersion}`
                     },
                     spec: testPodSpec,
                     command: [

@@ -64,7 +64,7 @@ spec:
                     hyperctl rm builder-{{build_id_with_prefix}}"]
   initContainers:
   - name: launcher
-    image: screwdrivercd/launcher:{{launcher_version}}
+    image: {{launcher_image}}
     command: ['/bin/sh', '-c', 'cp -a /opt/sd/* /opt/launcher && mkdir -p /opt/launcher/hab && cp -a /hab/* /opt/launcher/hab']
     volumeMounts:
     - mountPath: /opt/launcher

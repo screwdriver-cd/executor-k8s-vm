@@ -144,6 +144,7 @@ class K8sVMExecutor extends Executor {
             this.token = fs.existsSync(filepath) ? fs.readFileSync(filepath) : '';
         }
         this.host = this.kubernetes.host || 'kubernetes.default';
+        this.launchImage = options.launchImage || 'screwdrivercd/launcher';
         this.launchVersion = options.launchVersion || 'stable';
         this.prefix = options.prefix || '';
         this.jobsNamespace = this.kubernetes.jobsNamespace || 'default';
@@ -252,7 +253,7 @@ class K8sVMExecutor extends Executor {
                 store_uri: this.ecosystem.store,
                 pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
                 token: config.token,
-                launcher_version: this.launchVersion,
+                launcher_image: `${this.launchImage}:${this.launchVersion}`,
                 base_image: this.baseImage
             });
 
