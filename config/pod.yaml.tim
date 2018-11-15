@@ -56,12 +56,6 @@ spec:
       name: sd-workspaces
     - mountPath: /opt/sd
       name: sdlauncher
-    lifecycle:
-      preStop:
-        exec:
-          command: ["/bin/bash", "-c", "sleep 2;
-                    rm -rf /var/sd-workspaces/{{build_id_with_prefix}};
-                    hyperctl rm builder-{{build_id_with_prefix}}"]
   initContainers:
   - name: launcher
     image: {{launcher_image}}
