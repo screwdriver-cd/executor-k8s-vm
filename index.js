@@ -213,14 +213,13 @@ class K8sVMExecutor extends Executor {
      * @method start
      * @param  {Object}   config                A configuration object
      * @param  {Object}   [config.annotations]  Set of key value pairs
-     * @param  {Object}   [config.build]        Build object
      * @param  {Integer}  config.buildId        ID for the build
      * @param  {String}   config.container      Container for the build to run in
      * @param  {String}   config.token          JWT for the Build
      * @return {Promise}
      */
     _start(config) {
-        const { build, buildId, container, token } = config;
+        const { buildId, container, token } = config;
         const annotations = this.parseAnnotations(
             hoek.reach(config, 'annotations', { default: {} }));
         const cpuConfig = annotations[CPU_RESOURCE];
@@ -334,17 +333,14 @@ class K8sVMExecutor extends Executor {
                     token
                 };
 
-                // for backward compatibility
-                if (build && build.stats && resp.body.spec && resp.body.spec.nodeName) {
-                    // don't want to override other fields in stats
-                    build.stats.hostname = resp.body.spec.nodeName;
-                    updateConfig.stats = build.stats;
+                if (resp.body.spec && resp.body.spec.nodeName) {
+                    updateConfig.stats = {
+                        hostname: resp.body.spec.nodeName
+                    };
                 }
 
                 if (status === 'pending') {
                     updateConfig.statusMessage = 'Waiting for resources to be available.';
-
-                    return this.updateBuild(updateConfig);
                 }
 
                 return this.updateBuild(updateConfig).then(() => null);

@@ -382,7 +382,6 @@ describe('index', () => {
         let getConfig;
         let putConfig;
         let fakeStartConfig;
-        let buildMock;
 
         const fakeStartResponse = {
             statusCode: 201,
@@ -410,12 +409,6 @@ describe('index', () => {
         };
 
         beforeEach(() => {
-            buildMock = {
-                id: testBuildId,
-                stats: {
-                    queueTime: '2018-12-13T22:35:16.552Z'
-                }
-            };
             postConfig = {
                 uri: podsUrl,
                 method: 'POST',
@@ -490,10 +483,8 @@ describe('index', () => {
         );
 
         it('successfully calls start and update hostname', () => {
-            fakeStartConfig.build = buildMock;
             putConfig.body.stats = {
-                hostname: 'node1.my.k8s.cluster.com',
-                queueTime: '2018-12-13T22:35:16.552Z'
+                hostname: 'node1.my.k8s.cluster.com'
             };
 
             return executor.start(fakeStartConfig).then(() => {
@@ -723,6 +714,7 @@ describe('index', () => {
             };
             const returnResponseFromSDAPI = { statusCode: 200 };
 
+            fakeGetResponse.body.spec = {};
             putConfig.body = {
                 statusMessage: 'Waiting for resources to be available.'
             };
@@ -738,7 +730,7 @@ describe('index', () => {
                 assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
                 assert.calledWith(requestRetryMock.thirdCall, sinon.match(putConfig));
                 assert.calledWith(requestRetryMock, putConfig);
-                assert.deepEqual(resp.statusCode, 200);
+                assert.equal(resp, null);
             });
         });
 
