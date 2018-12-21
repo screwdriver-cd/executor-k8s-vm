@@ -174,29 +174,38 @@ class K8sVMExecutor extends Executor {
     }
 
     /**
-     * Update build status message
-     * @method updateStatusMessage
+     * Update build
+     * @method updateBuild
      * @param  {Object}          config                 build config of the job
      * @param  {String}          config.apiUri          screwdriver base api uri
      * @param  {Number}          config.buildId         build id
      * @param  {String}          config.statusMessage   build status message
+     * @param  {Object}          [config.stats]         build stats
      * @param  {String}          config.token           build temporal jwt token
      * @return {Promise}
      */
-    updateStatusMessage(config) {
-        const { apiUri, buildId, statusMessage, token } = config;
-        const statusMessageOptions = {
+    updateBuild(config) {
+        const { apiUri, buildId, statusMessage, token, stats } = config;
+        const options = {
             json: true,
             method: 'PUT',
             uri: `${apiUri}/v4/builds/${buildId}`,
-            body: { statusMessage },
             headers: { Authorization: `Bearer ${token}` },
             strictSSL: false,
             maxAttempts: MAXATTEMPTS,
-            retryDelay: RETRYDELAY
+            retryDelay: RETRYDELAY,
+            body: {}
         };
 
-        return this.breaker.runCommand(statusMessageOptions);
+        if (statusMessage) {
+            options.body.statusMessage = statusMessage;
+        }
+
+        if (stats) {
+            options.body.stats = stats;
+        }
+
+        return this.breaker.runCommand(options);
     }
 
     /**
@@ -210,6 +219,7 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
+        const { buildId, container, token } = config;
         const annotations = this.parseAnnotations(
             hoek.reach(config, 'annotations', { default: {} }));
         const cpuConfig = annotations[CPU_RESOURCE];
@@ -244,15 +254,15 @@ class K8sVMExecutor extends Executor {
             path.resolve(__dirname, './config/pod.yaml.tim'), {
                 cpu: CPU,
                 memory: MEMORY,
-                pod_name: `${this.prefix}${config.buildId}-${random}`,
-                build_id_with_prefix: `${this.prefix}${config.buildId}`,
-                build_id: config.buildId,
+                pod_name: `${this.prefix}${buildId}-${random}`,
+                build_id_with_prefix: `${this.prefix}${buildId}`,
+                build_id: buildId,
                 build_timeout: buildTimeout,
-                container: config.container,
+                container,
                 api_uri: this.ecosystem.api,
                 store_uri: this.ecosystem.store,
                 pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
-                token: config.token,
+                token,
                 launcher_image: `${this.launchImage}:${this.launchVersion}`,
                 base_image: this.baseImage
             });
@@ -317,16 +327,23 @@ class K8sVMExecutor extends Executor {
                         `${JSON.stringify(resp.body.status, null, 2)}`);
                 }
 
-                if (status === 'pending') {
-                    return this.updateStatusMessage({
-                        apiUri: this.ecosystem.api,
-                        buildId: config.buildId,
-                        statusMessage: 'Waiting for resources to be available.',
-                        token: config.token
-                    });
+                const updateConfig = {
+                    apiUri: this.ecosystem.api,
+                    buildId,
+                    token
+                };
+
+                if (resp.body.spec && resp.body.spec.nodeName) {
+                    updateConfig.stats = {
+                        hostname: resp.body.spec.nodeName
+                    };
                 }
 
-                return null;
+                if (status === 'pending') {
+                    updateConfig.statusMessage = 'Waiting for resources to be available.';
+                }
+
+                return this.updateBuild(updateConfig).then(() => null);
             });
     }
 

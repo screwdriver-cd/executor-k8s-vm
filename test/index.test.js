@@ -397,8 +397,15 @@ describe('index', () => {
             body: {
                 status: {
                     phase: 'running'
+                },
+                spec: {
+                    nodeName: 'node1.my.k8s.cluster.com'
                 }
+
             }
+        };
+        const fakePutResponse = {
+            id: testBuildId
         };
 
         beforeEach(() => {
@@ -445,9 +452,7 @@ describe('index', () => {
                 headers: {
                     Authorization: `Bearer ${testToken}`
                 },
-                body: {
-                    statusMessage: 'Waiting for resources to be available.'
-                },
+                body: {},
                 strictSSL: false,
                 maxAttempts: MAXATTEMPTS,
                 retryDelay: RETRYDELAY,
@@ -466,15 +471,29 @@ describe('index', () => {
                 null, fakeStartResponse, fakeStartResponse.body);
             requestRetryMock.withArgs(sinon.match({ method: 'GET' })).yieldsAsync(
                 null, fakeGetResponse, fakeGetResponse.body);
+            requestRetryMock.withArgs(sinon.match({ method: 'PUT' })).yieldsAsync(
+                null, fakePutResponse, fakePutResponse.body);
         });
 
         it('successfully calls start', () =>
             executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             })
         );
+
+        it('successfully calls start and update hostname', () => {
+            putConfig.body.stats = {
+                hostname: 'node1.my.k8s.cluster.com'
+            };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.equal(requestRetryMock.callCount, 3);
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.thirdCall, sinon.match(putConfig));
+            });
+        });
 
         it('sets the memory appropriately when ram is set to HIGH', () => {
             postConfig.body.metadata.memory = 12288;
@@ -482,8 +501,7 @@ describe('index', () => {
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
 
@@ -493,8 +511,7 @@ describe('index', () => {
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
 
@@ -504,8 +521,7 @@ describe('index', () => {
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
 
@@ -515,8 +531,7 @@ describe('index', () => {
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
 
@@ -544,8 +559,7 @@ describe('index', () => {
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
 
@@ -579,8 +593,7 @@ describe('index', () => {
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
 
@@ -605,8 +618,7 @@ describe('index', () => {
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
 
@@ -632,8 +644,7 @@ describe('index', () => {
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
-                assert.calledWith(requestRetryMock.secondCall,
-                    sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
 
@@ -701,8 +712,12 @@ describe('index', () => {
                     }
                 }
             };
-
             const returnResponseFromSDAPI = { statusCode: 200 };
+
+            fakeGetResponse.body.spec = {};
+            putConfig.body = {
+                statusMessage: 'Waiting for resources to be available.'
+            };
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
@@ -711,8 +726,11 @@ describe('index', () => {
                 null, returnResponseFromSDAPI);
 
             return executor.start(fakeStartConfig).then((resp) => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+                assert.calledWith(requestRetryMock.thirdCall, sinon.match(putConfig));
                 assert.calledWith(requestRetryMock, putConfig);
-                assert.deepEqual(resp.statusCode, 200);
+                assert.equal(resp, null);
             });
         });
 
