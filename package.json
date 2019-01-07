@@ -54,7 +54,7 @@
         "eslint-plugin-import": "^2.14.0",
         "hoek": "^5.0.4",
         "js-yaml": "^3.12.0",
-        "lodash": "^4.17.10",
+        "lodash": "^4.17.11",
         "randomstring": "^1.1.5",
         "requestretry": "^1.13.0",
         "screwdriver-data-schema": "^18.38.0",
