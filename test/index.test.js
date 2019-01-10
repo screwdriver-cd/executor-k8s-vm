@@ -314,9 +314,6 @@ describe('index', () => {
         const deleteConfig = {
             uri: podsUrl,
             method: 'DELETE',
-            json: {
-                gracePeriodSeconds: 0
-            },
             qs: {
                 labelSelector: `sdbuild=beta_${testBuildId}`
             },
