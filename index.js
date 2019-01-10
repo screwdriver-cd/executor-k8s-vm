@@ -164,9 +164,16 @@ class K8sVMExecutor extends Executor {
         this.microMemory = hoek.reach(options, 'kubernetes.resources.memory.micro', { default: 1 });
         this.diskLabel = hoek.reach(options, 'kubernetes.resources.disk.high', { default: '' });
         this.podRetryStrategy = (err, response, body) => {
-            const status = hoek.reach(body, 'status.phase');
+            const conditions = hoek.reach(body, 'status.conditions');
+            let scheduled = false;
 
-            return err || !status || status.toLowerCase() === 'pending';
+            if (conditions) {
+                const scheduledStatus = conditions.find(c => c.type === 'PodScheduled').status;
+
+                scheduled = String(scheduledStatus) === 'True';
+            }
+
+            return err || !scheduled;
         };
 
         this.nodeSelectors = hoek.reach(options, 'kubernetes.nodeSelectors');
@@ -338,9 +345,8 @@ class K8sVMExecutor extends Executor {
                         hostname: resp.body.spec.nodeName,
                         imagePullStartTime: (new Date()).toISOString()
                     };
-                }
-
-                if (status === 'pending') {
+                } else {
+                    // If not scheduled to a node after 5 requests, bubble it up to user
                     updateConfig.statusMessage = 'Waiting for resources to be available.';
                 }
 
