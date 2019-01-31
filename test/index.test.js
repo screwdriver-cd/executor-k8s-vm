@@ -104,6 +104,38 @@ describe('index', () => {
             }
         }
     };
+    const testSpecWithDiskSpeed = {
+        tolerations: [{
+            key: 'screwdriver.cd/diskspeed',
+            value: 'high',
+            effect: 'NoSchedule',
+            operator: 'Equal'
+        }, {
+            key: 'key',
+            value: 'value',
+            effect: 'NoSchedule',
+            operator: 'Equal'
+        }],
+        affinity: {
+            nodeAffinity: {
+                requiredDuringSchedulingIgnoredDuringExecution: {
+                    nodeSelectorTerms: [
+                        {
+                            matchExpressions: [{
+                                key: 'screwdriver.cd/diskspeed',
+                                operator: 'In',
+                                values: ['high']
+                            }, {
+                                key: 'key',
+                                operator: 'In',
+                                values: ['value']
+                            }]
+                        }
+                    ]
+                }
+            }
+        }
+    };
     const testPreferredSpec = {
         affinity: {
             nodeAffinity: {
@@ -589,6 +621,40 @@ describe('index', () => {
                     resources: {
                         disk: {
                             high: 'screwdriver.cd/disk'
+                        }
+                    }
+                },
+                prefix: 'beta_'
+            });
+
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
+        it('sets disk speed toleration and node affinity when diskSpeed is HIGH', () => {
+            fakeStartConfig.annotations = { 'screwdriver.cd/diskSpeed': 'high' };
+            const spec = _.merge({}, testSpecWithDiskSpeed, testPodSpec);
+
+            postConfig.body.spec = spec;
+
+            executor = new Executor({
+                ecosystem: {
+                    api: testApiUri,
+                    store: testStoreUri
+                },
+                fusebox: { retry: { minTimeout: 1 } },
+                kubernetes: {
+                    nodeSelectors: { key: 'value' },
+                    token: 'api_key',
+                    host: 'kubernetes.default',
+                    baseImage: 'hyperctl',
+                    resources: {
+                        disk: {
+                            speed: 'screwdriver.cd/diskspeed'
                         }
                     }
                 },
