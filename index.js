@@ -18,6 +18,7 @@ const RETRYDELAY = 3000;
 const CPU_RESOURCE = 'cpu';
 const RAM_RESOURCE = 'ram';
 const DISK_RESOURCE = 'disk';
+const DISK_SPEED_RESOURCE = 'diskSpeed';
 const ANNOTATION_BUILD_TIMEOUT = 'timeout';
 const TOLERATIONS_PATH = 'spec.tolerations';
 const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
@@ -163,6 +164,8 @@ class K8sVMExecutor extends Executor {
         this.lowMemory = hoek.reach(options, 'kubernetes.resources.memory.low', { default: 2 });
         this.microMemory = hoek.reach(options, 'kubernetes.resources.memory.micro', { default: 1 });
         this.diskLabel = hoek.reach(options, 'kubernetes.resources.disk.high', { default: '' });
+        this.diskSpeedLabel = hoek.reach(options,
+            'kubernetes.resources.disk.speed', { default: '' });
         this.podRetryStrategy = (err, response, body) => {
             const conditions = hoek.reach(body, 'status.conditions');
             let scheduled = false;
@@ -276,17 +279,28 @@ class K8sVMExecutor extends Executor {
 
         const podConfig = yaml.safeLoad(podTemplate);
 
+        const nodeSelectors = {};
+        const speedValues = ['turbo', 'high'];
+
         if (this.diskLabel) {
             const diskConfig = annotations[DISK_RESOURCE] || '';
-            const nodeSelectors = diskConfig.toUpperCase() === 'HIGH' ?
+            const diskSelectors = diskConfig.toUpperCase() === 'HIGH' ?
                 { [this.diskLabel]: 'high' } : {};
 
-            hoek.merge(nodeSelectors, this.nodeSelectors);
-
-            setNodeSelector(podConfig, nodeSelectors);
-        } else {
-            setNodeSelector(podConfig, this.nodeSelectors);
+            hoek.merge(nodeSelectors, diskSelectors);
         }
+
+        if (this.diskSpeedLabel) {
+            const diskSpeedConfig = (annotations[DISK_SPEED_RESOURCE] || '').toLowerCase();
+            const diskSpeedSelectors = (speedValues.includes(diskSpeedConfig)) ?
+                { [this.diskSpeedLabel]: diskSpeedConfig } : {};
+
+            hoek.merge(nodeSelectors, diskSpeedSelectors);
+        }
+
+        hoek.merge(nodeSelectors, this.nodeSelectors);
+
+        setNodeSelector(podConfig, nodeSelectors);
 
         setPreferredNodeSelector(podConfig, this.preferredNodeSelectors);
 
