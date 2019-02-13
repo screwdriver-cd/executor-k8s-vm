@@ -417,6 +417,24 @@ class K8sVMExecutor extends Executor {
     }
 
     /**
+     * Starts a new frozen build in an executor
+     * @method _startFrozen
+     * @return {Promise}  Resolves to null since it's not supported
+     */
+    _startFrozen() {
+        return Promise.resolve(null);
+    }
+
+    /**
+     * Stops a frozen build in an executor
+     * @method _stopFrozen
+     * @return {Promise}  Resolves to null since it's not supported
+     */
+    _stopFrozen() {
+        return Promise.resolve(null);
+    }
+
+    /**
     * Retreive stats for the executor
     * @method stats
     * @param  {Response} Object          Object containing stats for the executor

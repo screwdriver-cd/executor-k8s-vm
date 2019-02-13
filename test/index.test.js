@@ -336,6 +336,16 @@ describe('index', () => {
         });
     });
 
+    describe('frozen', () => {
+        describe('frozen', () => {
+            it('resolves to null when calling frozen start',
+                () => executor.startFrozen().then(res => assert.isNull(res)));
+
+            it('resolves to null when calling frozen stop',
+                () => executor.stopFrozen().then(res => assert.isNull(res)));
+        });
+    });
+
     describe('stop', () => {
         const fakeStopResponse = {
             statusCode: 200,
