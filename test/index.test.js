@@ -563,6 +563,26 @@ describe('index', () => {
             });
         });
 
+        it('sets the memory appropriately when ram is number', () => {
+            postConfig.body.metadata.memory = 12288;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/ram': 12 };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
+        it('sets the memory to max value when ram is larger than max', () => {
+            postConfig.body.metadata.memory = 16384;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/ram': 20 };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
         it('sets the CPU appropriately when cpu is set to HIGH', () => {
             postConfig.body.metadata.cpu = 6;
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 'HIGH' };
@@ -576,6 +596,26 @@ describe('index', () => {
         it('sets the CPU appropriately when cpu is set to MICRO', () => {
             postConfig.body.metadata.cpu = 1;
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 'MICRO' };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
+        it('sets the CPU appropriately when cpu is number', () => {
+            postConfig.body.metadata.cpu = 10;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 10 };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
+        it('sets the CPU to max value when cpu is larger than max', () => {
+            postConfig.body.metadata.cpu = 12;
+            fakeStartConfig.annotations = { 'beta.screwdriver.cd/cpu': 20 };
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);

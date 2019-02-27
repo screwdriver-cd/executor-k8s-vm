@@ -53,11 +53,11 @@
         "circuit-fuses": "^4.0.4",
         "eslint-plugin-import": "^2.16.0",
         "hoek": "^5.0.4",
-        "js-yaml": "^3.12.1",
+        "js-yaml": "^3.12.2",
         "lodash": "^4.17.11",
         "randomstring": "^1.1.5",
         "requestretry": "^1.13.0",
-        "screwdriver-data-schema": "^18.43.2",
+        "screwdriver-data-schema": "^18.43.6",
         "screwdriver-executor-base": "^7.0.0",
         "tinytim": "^0.1.1"
     }
