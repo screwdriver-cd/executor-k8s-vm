@@ -109,6 +109,7 @@ class K8sVMExecutor extends Executor {
      * @param  {Object} options.ecosystem.api                         Routable URI to Screwdriver API
      * @param  {Object} [options.ecosystem.pushgatewayUrl]            Pushgateway URL for Prometheus
      * @param  {Object} options.ecosystem.store                       Routable URI to Screwdriver Store
+     * @param  {Object} options.ecosystem.ui                          Routable URI to Screwdriver UI
      * @param  {Object} options.kubernetes                            Kubernetes configuration
      * @param  {String} [options.kubernetes.token]                    API Token (loaded from /var/run/secrets/kubernetes.io/serviceaccount/token if not provided)
      * @param  {String} [options.kubernetes.host=kubernetes.default]  Kubernetes hostname
@@ -286,6 +287,7 @@ class K8sVMExecutor extends Executor {
                 container,
                 api_uri: this.ecosystem.api,
                 store_uri: this.ecosystem.store,
+                ui_uri: this.ecosystem.ui,
                 pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
                 token,
                 launcher_image: `${this.launchImage}:${this.launchVersion}`,
