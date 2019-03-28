@@ -37,6 +37,7 @@ spec:
          "--container", "{{container}}",
          "--api_uri", "{{api_uri}}",
          "--store_uri", "{{store_uri}}",
+         "--ui_uri", "{{ui_uri}}",
          "--build_id", "{{build_id}}",
          "--id_with_prefix", "{{build_id_with_prefix}}",
          "--build_token", "{{token}}",
