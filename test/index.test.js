@@ -19,7 +19,7 @@ metadata:
   name: {{build_id_with_prefix}}
   container: {{container}}
   launchImage: {{launcher_image}}
-  launchVersion: {{launcher_veriosn}}
+  launchVersion: {{launcher_version}}
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_timeout}} {{build_id}}"
 spec:

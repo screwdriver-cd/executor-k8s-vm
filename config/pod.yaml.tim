@@ -41,7 +41,8 @@ spec:
          "--build_id", "{{build_id}}",
          "--id_with_prefix", "{{build_id_with_prefix}}",
          "--build_token", "{{token}}",
-         "--build_timeout", "{{build_timeout}}"
+         "--build_timeout", "{{build_timeout}}",
+         "--launcher_version", "{{launcher_version}}"
           ]
     env:
     - name: PUSHGATEWAY_URL
@@ -60,7 +61,7 @@ spec:
   initContainers:
   - name: launcher
     image: {{launcher_image}}
-    command: command: ['/bin/sh', '-c', 'if ! [ -d /opt/launcher/hab/pkgs ]; then cp -a /opt/sd/* /opt/launcher && mkdir -p /opt/launcher/hab && cp -a /hab/* /opt/launcher/hab; else ls /opt/launcher; fi;']
+    command: ['/bin/sh', '-c', 'if ! [ -d /opt/launcher/hab/pkgs ]; then cp -a /opt/sd/* /opt/launcher && mkdir -p /opt/launcher/hab && cp -a /hab/* /opt/launcher/hab; else ls /opt/launcher; fi;']
     volumeMounts:
     - mountPath: /opt/launcher
       name: sdlauncher
@@ -74,5 +75,6 @@ spec:
         path: /opt/screwdriver
 
     - name: sdlauncher
+      type: DirectoryOrCreate
       hostPath:
         path: /opt/screwdriver/sdlauncher/{{launcher_version}}
