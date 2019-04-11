@@ -60,7 +60,7 @@ spec:
   initContainers:
   - name: launcher
     image: {{launcher_image}}
-    command: ['/bin/sh', '-c', 'cp -a /opt/sd/* /opt/launcher && mkdir -p /opt/launcher/hab && cp -a /hab/* /opt/launcher/hab']
+    command: command: ['/bin/sh', '-c', 'if ! [ -d /opt/launcher/hab/pkgs ]; then cp -a /opt/sd/* /opt/launcher && mkdir -p /opt/launcher/hab && cp -a /hab/* /opt/launcher/hab; else ls /opt/launcher; fi;']
     volumeMounts:
     - mountPath: /opt/launcher
       name: sdlauncher
@@ -75,4 +75,4 @@ spec:
 
     - name: sdlauncher
       hostPath:
-        path: /opt/screwdriver/{{build_id_with_prefix}}/sdlauncher
+        path: /opt/screwdriver/sdlauncher/{{launcher_version}}
