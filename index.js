@@ -291,6 +291,7 @@ class K8sVMExecutor extends Executor {
                 pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
                 token,
                 launcher_image: `${this.launchImage}:${this.launchVersion}`,
+                launcher_version: this.launchVersion,
                 base_image: this.baseImage
             });
 

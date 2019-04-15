@@ -19,6 +19,7 @@ metadata:
   name: {{build_id_with_prefix}}
   container: {{container}}
   launchImage: {{launcher_image}}
+  launchVersion: {{launcher_version}}
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_timeout}} {{build_id}}"
 spec:
@@ -457,7 +458,8 @@ describe('index', () => {
                         memory: 2048,
                         name: 'beta_15',
                         container: testContainer,
-                        launchImage: `${testLaunchImage}:${testLaunchVersion}`
+                        launchImage: `${testLaunchImage}:${testLaunchVersion}`,
+                        launchVersion: testLaunchVersion
                     },
                     spec: testPodSpec,
                     command: [
