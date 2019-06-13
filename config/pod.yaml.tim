@@ -24,6 +24,10 @@ spec:
   - name: vm-launcher
     image: {{base_image}}
     imagePullPolicy: Always
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sh","-c","sleep 30"]
     securityContext:
       privileged: true
     resources:
