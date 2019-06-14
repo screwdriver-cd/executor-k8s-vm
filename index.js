@@ -13,8 +13,8 @@ const _ = require('lodash');
 
 const DEFAULT_BUILD_TIMEOUT = 90; // 90 minutes
 const MAX_BUILD_TIMEOUT = 120; // 120 minutes
-const MAXATTEMPTS = 5;
-const RETRYDELAY = 3000;
+const DEFAULT_MAXATTEMPTS = 5;
+const DEFAULT_RETRYDELAY = 3000;
 const CPU_RESOURCE = 'cpu';
 const RAM_RESOURCE = 'ram';
 const DISK_RESOURCE = 'disk';
@@ -133,12 +133,16 @@ class K8sVMExecutor extends Executor {
      * @param  {String} [options.launchVersion=stable]                Launcher container version to use
      * @param  {String} [options.prefix='']                           Prefix for job name
      * @param  {String} [options.fusebox]                             Options for the circuit breaker (https://github.com/screwdriver-cd/circuit-fuses)
+     * @param  {Object} [options.requestretry]                        Options for the requestretry (https://github.com/FGRibreau/node-request-retry)
+     * @param  {Number} [options.requestretry.retryDelay]             Value for retryDelay option of the requestretry
+     * @param  {Number} [options.requestretry.maxAttempts]            Value for maxAttempts option of the requestretry
      */
     constructor(options = {}) {
         super();
 
         this.kubernetes = options.kubernetes || {};
         this.ecosystem = options.ecosystem;
+        this.requestretryOptions = options.requestretry || {};
 
         if (this.kubernetes.token) {
             this.token = this.kubernetes.token;
@@ -157,6 +161,8 @@ class K8sVMExecutor extends Executor {
         this.maxBuildTimeout = this.kubernetes.maxBuildTimeout || MAX_BUILD_TIMEOUT;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(requestretry, options.fusebox);
+        this.retryDelay = this.requestretryOptions.retryDelay || DEFAULT_RETRYDELAY;
+        this.maxAttempts = this.requestretryOptions.maxAttempts || DEFAULT_MAXATTEMPTS;
         this.maxCpu = hoek.reach(options, 'kubernetes.resources.cpu.max', { default: 12 });
         this.turboCpu = hoek.reach(options, 'kubernetes.resources.cpu.turbo', { default: 12 });
         this.highCpu = hoek.reach(options, 'kubernetes.resources.cpu.high', { default: 6 });
@@ -207,8 +213,8 @@ class K8sVMExecutor extends Executor {
             uri: `${apiUri}/v4/builds/${buildId}`,
             headers: { Authorization: `Bearer ${token}` },
             strictSSL: false,
-            maxAttempts: MAXATTEMPTS,
-            retryDelay: RETRYDELAY,
+            maxAttempts: this.maxAttempts,
+            retryDelay: this.retryDelay,
             body: {}
         };
 
@@ -345,8 +351,8 @@ class K8sVMExecutor extends Executor {
                     method: 'GET',
                     headers: { Authorization: `Bearer ${this.token}` },
                     strictSSL: false,
-                    maxAttempts: MAXATTEMPTS,
-                    retryDelay: RETRYDELAY,
+                    maxAttempts: this.maxAttempts,
+                    retryDelay: this.retryDelay,
                     retryStrategy: this.podRetryStrategy,
                     json: true
                 };

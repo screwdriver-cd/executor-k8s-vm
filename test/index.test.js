@@ -185,6 +185,18 @@ describe('index', () => {
             }
         }
     };
+    const executorOptions = {
+        ecosystem: {
+            api: testApiUri,
+            store: testStoreUri
+        },
+        kubernetes: {
+            nodeSelectors: {},
+            preferredNodeSelectors: {}
+        },
+        fusebox: { retry: { minTimeout: 1 } },
+        prefix: 'beta_'
+    };
 
     before(() => {
         mockery.enable({
@@ -214,18 +226,7 @@ describe('index', () => {
         Executor = require('../index');
         /* eslint-enable global-require */
 
-        executor = new Executor({
-            ecosystem: {
-                api: testApiUri,
-                store: testStoreUri
-            },
-            kubernetes: {
-                nodeSelectors: {},
-                preferredNodeSelectors: {}
-            },
-            fusebox: { retry: { minTimeout: 1 } },
-            prefix: 'beta_'
-        });
+        executor = new Executor(executorOptions);
     });
 
     afterEach(() => {
@@ -627,24 +628,17 @@ describe('index', () => {
 
         it('sets tolerations and node affinity with appropriate node config', () => {
             const spec = _.merge({}, testSpec, testPodSpec);
-
-            postConfig.body.spec = spec;
-
-            executor = new Executor({
-                ecosystem: {
-                    api: testApiUri,
-                    store: testStoreUri
-                },
-                fusebox: { retry: { minTimeout: 1 } },
+            const options = _.assign({}, executorOptions, {
                 kubernetes: {
                     nodeSelectors: { key: 'value' },
                     token: 'api_key',
                     host: 'kubernetes.default',
                     baseImage: 'hyperctl'
-                },
-                prefix: 'beta_'
+                }
             });
 
+            executor = new Executor(options);
+            postConfig.body.spec = spec;
             getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start(fakeStartConfig).then(() => {
@@ -656,15 +650,7 @@ describe('index', () => {
         it('sets disk toleration and node affinity when disk is HIGH', () => {
             fakeStartConfig.annotations = { 'beta.screwdriver.cd/disk': 'high' };
             const spec = _.merge({}, testSpecWithDisk, testPodSpec);
-
-            postConfig.body.spec = spec;
-
-            executor = new Executor({
-                ecosystem: {
-                    api: testApiUri,
-                    store: testStoreUri
-                },
-                fusebox: { retry: { minTimeout: 1 } },
+            const options = _.assign({}, executorOptions, {
                 kubernetes: {
                     nodeSelectors: { key: 'value' },
                     token: 'api_key',
@@ -675,10 +661,11 @@ describe('index', () => {
                             high: 'screwdriver.cd/disk'
                         }
                     }
-                },
-                prefix: 'beta_'
+                }
             });
 
+            executor = new Executor(options);
+            postConfig.body.spec = spec;
             getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start(fakeStartConfig).then(() => {
@@ -688,17 +675,8 @@ describe('index', () => {
         });
 
         it('sets disk speed toleration and node affinity when diskSpeed is HIGH', () => {
-            fakeStartConfig.annotations = { 'screwdriver.cd/diskSpeed': 'high' };
             const spec = _.merge({}, testSpecWithDiskSpeed, testPodSpec);
-
-            postConfig.body.spec = spec;
-
-            executor = new Executor({
-                ecosystem: {
-                    api: testApiUri,
-                    store: testStoreUri
-                },
-                fusebox: { retry: { minTimeout: 1 } },
+            const options = _.assign({}, executorOptions, {
                 kubernetes: {
                     nodeSelectors: { key: 'value' },
                     token: 'api_key',
@@ -709,10 +687,12 @@ describe('index', () => {
                             speed: 'screwdriver.cd/diskspeed'
                         }
                     }
-                },
-                prefix: 'beta_'
+                }
             });
 
+            executor = new Executor(options);
+            postConfig.body.spec = spec;
+            fakeStartConfig.annotations = { 'screwdriver.cd/diskSpeed': 'high' };
             getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start(fakeStartConfig).then(() => {
@@ -723,21 +703,14 @@ describe('index', () => {
 
         it('sets preferred node affinity with appropriate node config', () => {
             const spec = _.merge({}, testPreferredSpec, testPodSpec);
-
-            postConfig.body.spec = spec;
-
-            executor = new Executor({
-                ecosystem: {
-                    api: testApiUri,
-                    store: testStoreUri
-                },
-                fusebox: { retry: { minTimeout: 1 } },
-                prefix: 'beta_',
+            const options = _.assign({}, executorOptions, {
                 kubernetes: {
                     preferredNodeSelectors: { key: 'value', foo: 'bar' }
                 }
             });
 
+            executor = new Executor(options);
+            postConfig.body.spec = spec;
             getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start(fakeStartConfig).then(() => {
@@ -748,22 +721,15 @@ describe('index', () => {
 
         it('sets node affinity and preferred node affinity', () => {
             const spec = _.merge({}, testSpec, testPreferredSpec, testPodSpec);
-
-            postConfig.body.spec = spec;
-
-            executor = new Executor({
-                ecosystem: {
-                    api: testApiUri,
-                    store: testStoreUri
-                },
-                fusebox: { retry: { minTimeout: 1 } },
-                prefix: 'beta_',
+            const options = _.assign({}, executorOptions, {
                 kubernetes: {
                     nodeSelectors: { key: 'value' },
                     preferredNodeSelectors: { key: 'value', foo: 'bar' }
                 }
             });
 
+            executor = new Executor(options);
+            postConfig.body.spec = spec;
             getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start(fakeStartConfig).then(() => {
@@ -932,6 +898,25 @@ describe('index', () => {
                 '/opt/sd/launch http://api:8080 http://store:8080 abcdefg '
                 + `${MAX_BUILD_TIMEOUT} 15`
             ];
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
+        it('sets retryDelay and maxAttempts', () => {
+            const options = _.assign({}, executorOptions, {
+                requestretry: {
+                    retryDelay: 1000,
+                    maxAttempts: 1
+                }
+            });
+
+            executor = new Executor(options);
+            getConfig.retryDelay = 1000;
+            getConfig.maxAttempts = 1;
+            getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start(fakeStartConfig).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
