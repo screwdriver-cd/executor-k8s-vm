@@ -33,6 +33,8 @@ The class provides a couple options that are configurable in the instantiation o
 | config.kubernetes.resources.cpu.high | Number | 6 | Value for HIGH CPU (in cores) |
 | config.kubernetes.resources.cpu.low | Number | 2 | Value for LOW CPU (in cores) |
 | config.kubernetes.resources.cpu.micro | Number | 1 | Value for MICRO CPU (in cores) |
+| config.kubernetes.resources.disk.space | String | | Value for disk space label (e.g.: screwdriver.cd/disk) |
+| config.kubernetes.resources.disk.speed | String | | Value for disk speed label (e.g.: screwdriver.cd/diskSpeed) |
 
 ### Methods
 
