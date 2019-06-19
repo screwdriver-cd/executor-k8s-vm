@@ -658,7 +658,7 @@ describe('index', () => {
                     baseImage: 'hyperctl',
                     resources: {
                         disk: {
-                            high: 'screwdriver.cd/disk'
+                            space: 'screwdriver.cd/disk'
                         }
                     }
                 }

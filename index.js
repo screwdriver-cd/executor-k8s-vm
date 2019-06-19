@@ -127,7 +127,8 @@ class K8sVMExecutor extends Executor {
      * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
      * @param  {Number} [options.kubernetes.resources.memory.micro=1] Value for MICRO memory (in GB)
-     * @param  {Number} [options.kubernetes.resources.disk.high]      Value for disk HIGH label
+     * @param  {String} [options.kubernetes.resources.disk.space]     Value for disk space label (e.g.: screwdriver.cd/disk)
+     * @param  {String} [options.kubernetes.resources.disk.speed]     Value for disk speed label (e.g.: screwdriver.cd/diskSpeed)
      * @param  {Number} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
      * @param  {Object} [options.kubernetes.nodeSelectors]            Object representing node label-value pairs
      * @param  {String} [options.launchVersion=stable]                Launcher container version to use
@@ -174,7 +175,7 @@ class K8sVMExecutor extends Executor {
         this.highMemory = hoek.reach(options, 'kubernetes.resources.memory.high', { default: 12 });
         this.lowMemory = hoek.reach(options, 'kubernetes.resources.memory.low', { default: 2 });
         this.microMemory = hoek.reach(options, 'kubernetes.resources.memory.micro', { default: 1 });
-        this.diskLabel = hoek.reach(options, 'kubernetes.resources.disk.high', { default: '' });
+        this.diskLabel = hoek.reach(options, 'kubernetes.resources.disk.space', { default: '' });
         this.diskSpeedLabel = hoek.reach(options,
             'kubernetes.resources.disk.speed', { default: '' });
         this.podRetryStrategy = (err, response, body) => {
@@ -302,22 +303,18 @@ class K8sVMExecutor extends Executor {
             });
 
         const podConfig = yaml.safeLoad(podTemplate);
-
         const nodeSelectors = {};
-        const speedValues = ['turbo', 'high'];
 
         if (this.diskLabel) {
-            const diskConfig = annotations[DISK_RESOURCE] || '';
-            const diskSelectors = diskConfig.toUpperCase() === 'HIGH' ?
-                { [this.diskLabel]: 'high' } : {};
+            const diskConfig = (annotations[DISK_RESOURCE] || '').toLowerCase();
+            const diskSelectors = { [this.diskLabel]: diskConfig };
 
             hoek.merge(nodeSelectors, diskSelectors);
         }
 
         if (this.diskSpeedLabel) {
             const diskSpeedConfig = (annotations[DISK_SPEED_RESOURCE] || '').toLowerCase();
-            const diskSpeedSelectors = (speedValues.includes(diskSpeedConfig)) ?
-                { [this.diskSpeedLabel]: diskSpeedConfig } : {};
+            const diskSpeedSelectors = { [this.diskSpeedLabel]: diskSpeedConfig };
 
             hoek.merge(nodeSelectors, diskSpeedSelectors);
         }
