@@ -307,14 +307,15 @@ class K8sVMExecutor extends Executor {
 
         if (this.diskLabel) {
             const diskConfig = (annotations[DISK_RESOURCE] || '').toLowerCase();
-            const diskSelectors = { [this.diskLabel]: diskConfig };
+            const diskSelectors = diskConfig ? { [this.diskLabel]: diskConfig } : {};
 
             hoek.merge(nodeSelectors, diskSelectors);
         }
 
         if (this.diskSpeedLabel) {
             const diskSpeedConfig = (annotations[DISK_SPEED_RESOURCE] || '').toLowerCase();
-            const diskSpeedSelectors = { [this.diskSpeedLabel]: diskSpeedConfig };
+            const diskSpeedSelectors = diskSpeedConfig ?
+                { [this.diskSpeedLabel]: diskSpeedConfig } : {};
 
             hoek.merge(nodeSelectors, diskSpeedSelectors);
         }
