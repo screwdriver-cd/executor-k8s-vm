@@ -674,6 +674,33 @@ describe('index', () => {
             });
         });
 
+        it('does not set disk toleration and node affinity when disk is not set', () => {
+            fakeStartConfig.annotations = {};
+            const spec = _.merge({}, testSpec, testPodSpec);
+            const options = _.assign({}, executorOptions, {
+                kubernetes: {
+                    nodeSelectors: { key: 'value' },
+                    token: 'api_key',
+                    host: 'kubernetes.default',
+                    baseImage: 'hyperctl',
+                    resources: {
+                        disk: {
+                            space: 'screwdriver.cd/disk'
+                        }
+                    }
+                }
+            });
+
+            executor = new Executor(options);
+            postConfig.body.spec = spec;
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
         it('sets disk speed toleration and node affinity when diskSpeed is HIGH', () => {
             const spec = _.merge({}, testSpecWithDiskSpeed, testPodSpec);
             const options = _.assign({}, executorOptions, {
@@ -693,6 +720,33 @@ describe('index', () => {
             executor = new Executor(options);
             postConfig.body.spec = spec;
             fakeStartConfig.annotations = { 'screwdriver.cd/diskSpeed': 'high' };
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
+
+        it('does not set disk speed toleration when disk speed is not set', () => {
+            fakeStartConfig.annotations = {};
+            const spec = _.merge({}, testSpec, testPodSpec);
+            const options = _.assign({}, executorOptions, {
+                kubernetes: {
+                    nodeSelectors: { key: 'value' },
+                    token: 'api_key',
+                    host: 'kubernetes.default',
+                    baseImage: 'hyperctl',
+                    resources: {
+                        disk: {
+                            speed: 'screwdriver.cd/diskspeed'
+                        }
+                    }
+                }
+            });
+
+            executor = new Executor(options);
+            postConfig.body.spec = spec;
             getConfig.retryStrategy = executor.podRetryStrategy;
 
             return executor.start(fakeStartConfig).then(() => {
