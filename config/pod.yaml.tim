@@ -46,7 +46,11 @@ spec:
          "--id_with_prefix", "{{build_id_with_prefix}}",
          "--build_token", "{{token}}",
          "--build_timeout", "{{build_timeout}}",
-         "--launcher_version", "{{launcher_version}}"
+         "--launcher_version", "{{launcher_version}}",
+         "--job_id", "{{job_id}}",
+         "--event_id","{{event_id}}",
+         "--pipeline_id", "{{pipeline_id}}",
+         "--cache_path", "{{cache_path}}"
           ]
     env:
     - name: PUSHGATEWAY_URL

@@ -147,7 +147,6 @@ class K8sVMExecutor extends Executor {
         this.kubernetes = options.kubernetes || {};
         this.ecosystem = options.ecosystem;
         this.requestretryOptions = options.requestretry || {};
-        this.cache = options.cache || {};
 
         if (this.kubernetes.token) {
             this.token = this.kubernetes.token;
@@ -197,6 +196,8 @@ class K8sVMExecutor extends Executor {
 
         this.nodeSelectors = hoek.reach(options, 'kubernetes.nodeSelectors');
         this.preferredNodeSelectors = hoek.reach(options, 'kubernetes.preferredNodeSelectors');
+        this.cache_strategy = hoek.reach(options, 'cache.strategy', { default: 's3' });
+        this.cache_path = hoek.reach(options, 'cache.path', { default: '' });
     }
 
     /**
@@ -294,50 +295,36 @@ class K8sVMExecutor extends Executor {
             ? Math.min(annotations[ANNOTATION_BUILD_TIMEOUT], this.maxBuildTimeout)
             : this.buildTimeout;
 
+        const podSpec = {
+            cpu,
+            memory,
+            pod_name: `${this.prefix}${buildId}-${random}`,
+            build_id_with_prefix: `${this.prefix}${buildId}`,
+            build_id: buildId,
+            build_timeout: buildTimeout,
+            container,
+            api_uri: this.ecosystem.api,
+            store_uri: this.ecosystem.store,
+            ui_uri: this.ecosystem.ui,
+            pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
+            token,
+            launcher_image: `${this.launchImage}:${this.launchVersion}`,
+            launcher_version: this.launchVersion,
+            base_image: this.baseImage,
+            job_id: jobId,
+            pipeline_id: pipelineId,
+            event_id: eventId,
+            cache_path: ''
+        };
         let podTemplate;
 
-        if (this.cache.path && this.cache.strategy === CACHE_STRATEGY) {
+        if (this.cache_path && this.cache_strategy === CACHE_STRATEGY) {
+            podSpec.cache_path = this.cache_path;
             podTemplate = tinytim.renderFile(
-                path.resolve(__dirname, './config/pod.cache2disk.yaml.tim'), {
-                    cpu,
-                    memory,
-                    pod_name: `${this.prefix}${buildId}-${random}`,
-                    build_id_with_prefix: `${this.prefix}${buildId}`,
-                    build_id: buildId,
-                    job_id: jobId,
-                    pipeline_id: pipelineId,
-                    event_id: eventId,
-                    build_timeout: buildTimeout,
-                    container,
-                    api_uri: this.ecosystem.api,
-                    store_uri: this.ecosystem.store,
-                    ui_uri: this.ecosystem.ui,
-                    pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
-                    token,
-                    launcher_image: `${this.launchImage}:${this.launchVersion}`,
-                    launcher_version: this.launchVersion,
-                    base_image: this.baseImage,
-                    cache_path: this.cache.path
-                });
+                path.resolve(__dirname, './config/pod.cache2disk.yaml.tim'), podSpec);
         } else {
             podTemplate = tinytim.renderFile(
-                path.resolve(__dirname, './config/pod.yaml.tim'), {
-                    cpu,
-                    memory,
-                    pod_name: `${this.prefix}${buildId}-${random}`,
-                    build_id_with_prefix: `${this.prefix}${buildId}`,
-                    build_id: buildId,
-                    build_timeout: buildTimeout,
-                    container,
-                    api_uri: this.ecosystem.api,
-                    store_uri: this.ecosystem.store,
-                    ui_uri: this.ecosystem.ui,
-                    pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
-                    token,
-                    launcher_image: `${this.launchImage}:${this.launchVersion}`,
-                    launcher_version: this.launchVersion,
-                    base_image: this.baseImage
-                });
+                path.resolve(__dirname, './config/pod.yaml.tim'), podSpec);
         }
 
         const podConfig = yaml.safeLoad(podTemplate);
