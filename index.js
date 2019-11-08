@@ -301,6 +301,9 @@ class K8sVMExecutor extends Executor {
             pod_name: `${this.prefix}${buildId}-${random}`,
             build_id_with_prefix: `${this.prefix}${buildId}`,
             build_id: buildId,
+            job_id: jobId,
+            pipeline_id: pipelineId,
+            event_id: eventId,
             build_timeout: buildTimeout,
             container,
             api_uri: this.ecosystem.api,
@@ -311,9 +314,6 @@ class K8sVMExecutor extends Executor {
             launcher_image: `${this.launchImage}:${this.launchVersion}`,
             launcher_version: this.launchVersion,
             base_image: this.baseImage,
-            job_id: jobId,
-            pipeline_id: pipelineId,
-            event_id: eventId,
             cache_path: ''
         };
         let podTemplate;
