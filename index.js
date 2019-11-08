@@ -26,6 +26,7 @@ const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
 const AFFINITY_PREFERRED_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
     'preferredDuringSchedulingIgnoredDuringExecution';
 const PREFERRED_WEIGHT = 100;
+const CACHE_STRATEGY = 'disk';
 
 /**
  * Parses nodeSelector config and update intended nodeSelector in tolerations
@@ -137,6 +138,8 @@ class K8sVMExecutor extends Executor {
      * @param  {Object} [options.requestretry]                        Options for the requestretry (https://github.com/FGRibreau/node-request-retry)
      * @param  {Number} [options.requestretry.retryDelay]             Value for retryDelay option of the requestretry
      * @param  {Number} [options.requestretry.maxAttempts]            Value for maxAttempts option of the requestretry
+     * @param  {String} [options.cache.strategy]                      Value for build cache - s3, disk
+     * @param  {String} [options.cache.path]                          Value for build cache path if options.cache.strategy is disk
      */
     constructor(options = {}) {
         super();
@@ -144,6 +147,7 @@ class K8sVMExecutor extends Executor {
         this.kubernetes = options.kubernetes || {};
         this.ecosystem = options.ecosystem;
         this.requestretryOptions = options.requestretry || {};
+        this.cache = options.cache || {};
 
         if (this.kubernetes.token) {
             this.token = this.kubernetes.token;
@@ -233,15 +237,22 @@ class K8sVMExecutor extends Executor {
     /**
      * Starts a k8s build
      * @method start
-     * @param  {Object}   config                A configuration object
-     * @param  {Object}   [config.annotations]  Set of key value pairs
-     * @param  {Integer}  config.buildId        ID for the build
-     * @param  {String}   config.container      Container for the build to run in
-     * @param  {String}   config.token          JWT for the Build
+     * @param  {Object}   config                    A configuration object
+     * @param  {Object}   [config.annotations]      Set of key value pairs
+     * @param  {Integer}  config.buildId            ID for the build
+     * @param  {Integer}  config.id                 pipelineId for the build
+     * @param  {Integer}  config.eventId            eventId for the build
+     * @param  {String}   config.container          Container for the build to run in
+     * @param  {String}   config.token              JWT for the Build
      * @return {Promise}
      */
     _start(config) {
-        const { buildId, container, token } = config;
+        const { buildId, jobId, eventId, container, token } = config;
+        let pipelineId = '';
+
+        if (config.pipeline) {
+            pipelineId = config.pipeline.id || '';
+        }
         const annotations = this.parseAnnotations(
             hoek.reach(config, 'annotations', { default: {} }));
         const cpuConfig = annotations[CPU_RESOURCE];
@@ -283,24 +294,51 @@ class K8sVMExecutor extends Executor {
             ? Math.min(annotations[ANNOTATION_BUILD_TIMEOUT], this.maxBuildTimeout)
             : this.buildTimeout;
 
-        const podTemplate = tinytim.renderFile(
-            path.resolve(__dirname, './config/pod.yaml.tim'), {
-                cpu,
-                memory,
-                pod_name: `${this.prefix}${buildId}-${random}`,
-                build_id_with_prefix: `${this.prefix}${buildId}`,
-                build_id: buildId,
-                build_timeout: buildTimeout,
-                container,
-                api_uri: this.ecosystem.api,
-                store_uri: this.ecosystem.store,
-                ui_uri: this.ecosystem.ui,
-                pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
-                token,
-                launcher_image: `${this.launchImage}:${this.launchVersion}`,
-                launcher_version: this.launchVersion,
-                base_image: this.baseImage
-            });
+        let podTemplate;
+
+        if (this.cache.path && this.cache.strategy === CACHE_STRATEGY) {
+            podTemplate = tinytim.renderFile(
+                path.resolve(__dirname, './config/pod.cache2disk.yaml.tim'), {
+                    cpu,
+                    memory,
+                    pod_name: `${this.prefix}${buildId}-${random}`,
+                    build_id_with_prefix: `${this.prefix}${buildId}`,
+                    build_id: buildId,
+                    job_id: jobId,
+                    pipeline_id: pipelineId,
+                    event_id: eventId,
+                    build_timeout: buildTimeout,
+                    container,
+                    api_uri: this.ecosystem.api,
+                    store_uri: this.ecosystem.store,
+                    ui_uri: this.ecosystem.ui,
+                    pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
+                    token,
+                    launcher_image: `${this.launchImage}:${this.launchVersion}`,
+                    launcher_version: this.launchVersion,
+                    base_image: this.baseImage,
+                    cache_path: this.cache.path
+                });
+        } else {
+            podTemplate = tinytim.renderFile(
+                path.resolve(__dirname, './config/pod.yaml.tim'), {
+                    cpu,
+                    memory,
+                    pod_name: `${this.prefix}${buildId}-${random}`,
+                    build_id_with_prefix: `${this.prefix}${buildId}`,
+                    build_id: buildId,
+                    build_timeout: buildTimeout,
+                    container,
+                    api_uri: this.ecosystem.api,
+                    store_uri: this.ecosystem.store,
+                    ui_uri: this.ecosystem.ui,
+                    pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
+                    token,
+                    launcher_image: `${this.launchImage}:${this.launchVersion}`,
+                    launcher_version: this.launchVersion,
+                    base_image: this.baseImage
+                });
+        }
 
         const podConfig = yaml.safeLoad(podTemplate);
         const nodeSelectors = {};
@@ -386,6 +424,7 @@ class K8sVMExecutor extends Executor {
                     updateConfig.statusMessage = 'Waiting for resources to be available.';
                 }
 
+                // eslint-disable-next-line no-unused-expressions,max-len
                 return this.updateBuild(updateConfig).then(() => null);
             });
     }

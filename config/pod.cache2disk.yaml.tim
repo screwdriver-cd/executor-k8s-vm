@@ -46,7 +46,11 @@ spec:
          "--id_with_prefix", "{{build_id_with_prefix}}",
          "--build_token", "{{token}}",
          "--build_timeout", "{{build_timeout}}",
-         "--launcher_version", "{{launcher_version}}"
+         "--launcher_version", "{{launcher_version}}",
+         "--job_id", "{{job_id}}",
+         "--event_id","{{event_id}}",
+         "--pipeline_id", "{{pipeline_id}}",
+         "--cache_path", "{{cache_path}}"
           ]
     env:
     - name: PUSHGATEWAY_URL
@@ -62,6 +66,8 @@ spec:
       name: sd-workspaces
     - mountPath: /opt/sd
       name: sdlauncher
+    - mountPath: /opt/sd/cache
+      name: sdcache
   initContainers:
   - name: launcher
     image: {{launcher_image}}
@@ -80,3 +86,15 @@ spec:
       type: DirectoryOrCreate
       hostPath:
         path: /opt/screwdriver/sdlauncher/{{launcher_version}}
+    - name: sdcache
+      type: DirectoryOrCreate
+      hostPath:
+        path: {{cache_path}}/pipelines/{{pipeline_id}}
+    - name: sdjobcache
+      type: DirectoryOrCreate
+      hostPath:
+        path: {{cache_path}}/pipelines/{{pipeline_id}}/jobs/{{job_id}}
+    - name: sdeventcache
+      type: DirectoryOrCreate
+      hostPath:
+        path: {{cache_path}}/pipelines/{{pipeline_id}}/events/{{event_id}}

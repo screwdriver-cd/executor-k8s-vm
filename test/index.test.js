@@ -404,7 +404,7 @@ describe('index', () => {
             };
 
             const returnMessage = 'Failed to delete pod: '
-                  + `${JSON.stringify(fakeStopErrorResponse.body)}`;
+                + `${JSON.stringify(fakeStopErrorResponse.body)}`;
 
             requestRetryMock.yieldsAsync(null, fakeStopErrorResponse, fakeStopErrorResponse.body);
 
@@ -423,6 +423,7 @@ describe('index', () => {
         let getConfig;
         let putConfig;
         let fakeStartConfig;
+        let fakeStartConfigWithCache;
 
         const fakeStartResponse = {
             statusCode: 201,
@@ -509,6 +510,12 @@ describe('index', () => {
                 apiUri: testApiUri
             };
 
+            fakeStartConfigWithCache = fakeStartConfig;
+
+            fakeStartConfigWithCache.jobId = 1;
+            fakeStartConfigWithCache.eventId = 2;
+            fakeStartConfigWithCache.pipeline = { id: 3, scmContext: 'test' };
+
             requestRetryMock.withArgs(sinon.match({ method: 'POST' })).yieldsAsync(
                 null, fakeStartResponse, fakeStartResponse.body);
             requestRetryMock.withArgs(sinon.match({ method: 'GET' })).yieldsAsync(
@@ -519,6 +526,13 @@ describe('index', () => {
 
         it('successfully calls start', () =>
             executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            })
+        );
+
+        it('successfully calls start with cache', () =>
+            executor.start(fakeStartConfigWithCache).then(() => {
                 assert.calledWith(requestRetryMock.firstCall, postConfig);
                 assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             })
@@ -813,7 +827,7 @@ describe('index', () => {
                 }
             };
             const returnMessage = 'Failed to get pod status:' +
-                        `${JSON.stringify(returnResponse.body, null, 2)}`;
+                `${JSON.stringify(returnResponse.body, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
@@ -835,7 +849,7 @@ describe('index', () => {
                 }
             };
             const returnMessage = 'Failed to create pod. Pod status is:' +
-                        `${JSON.stringify(returnResponse.body.status, null, 2)}`;
+                `${JSON.stringify(returnResponse.body.status, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
@@ -888,7 +902,7 @@ describe('index', () => {
                 }
             };
             const returnMessage = 'Failed to create pod. Pod status is:' +
-                        `${JSON.stringify(returnResponse.body.status, null, 2)}`;
+                `${JSON.stringify(returnResponse.body.status, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
