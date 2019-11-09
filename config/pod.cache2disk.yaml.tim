@@ -66,8 +66,12 @@ spec:
       name: sd-workspaces
     - mountPath: /opt/sd
       name: sdlauncher
-    - mountPath: /opt/sd/cache
-      name: sdcache
+    - mountPath: /opt/sd/cache/pipeline
+      name: sd-pipeline-cache
+    - mountPath: /opt/sd/cache/job
+      name: sd-job-cache
+    - mountPath: /opt/sd/cache/event
+      name: sd-event-cache
   initContainers:
   - name: launcher
     image: {{launcher_image}}
@@ -86,15 +90,15 @@ spec:
       type: DirectoryOrCreate
       hostPath:
         path: /opt/screwdriver/sdlauncher/{{launcher_version}}
-    - name: sdcache
+    - name: sd-pipeline-cache
       type: DirectoryOrCreate
       hostPath:
         path: {{cache_path}}/pipelines/{{pipeline_id}}
-    - name: sdjobcache
+    - name: sd-job-cache
       type: DirectoryOrCreate
       hostPath:
-        path: {{cache_path}}/pipelines/{{pipeline_id}}/jobs/{{job_id}}
-    - name: sdeventcache
+        path: {{cache_path}}/jobs/{{pipeline_id}}/{{job_id}}
+    - name: sd-event-cache
       type: DirectoryOrCreate
       hostPath:
-        path: {{cache_path}}/pipelines/{{pipeline_id}}/events/{{event_id}}
+        path: {{cache_path}}/events/{{pipeline_id}}/{{event_id}}
