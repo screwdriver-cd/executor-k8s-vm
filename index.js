@@ -26,7 +26,7 @@ const AFFINITY_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
 const AFFINITY_PREFERRED_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
     'preferredDuringSchedulingIgnoredDuringExecution';
 const PREFERRED_WEIGHT = 100;
-const CACHE_STRATEGY = 'disk';
+const DISK_CACHE_STRATEGY = 'disk';
 
 /**
  * Parses nodeSelector config and update intended nodeSelector in tolerations
@@ -316,7 +316,7 @@ class K8sVMExecutor extends Executor {
         };
         let podTemplate;
 
-        if (this.cache_path && this.cache_strategy === CACHE_STRATEGY) {
+        if (this.cache_path && this.cache_strategy === DISK_CACHE_STRATEGY) {
             podSpec.cache_strategy = this.cache_strategy;
             podSpec.cache_path = this.cache_path;
             if (this.prefix) {
