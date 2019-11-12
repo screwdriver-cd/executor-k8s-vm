@@ -249,11 +249,7 @@ class K8sVMExecutor extends Executor {
      */
     _start(config) {
         const { buildId, jobId, eventId, container, token } = config;
-        let pipelineId = '';
-
-        if (config.pipeline) {
-            pipelineId = config.pipeline.id || '';
-        }
+        const pipelineId = hoek.reach(config, 'pipeline.id', { default: '' });
         const annotations = this.parseAnnotations(
             hoek.reach(config, 'annotations', { default: {} }));
         const cpuConfig = annotations[CPU_RESOURCE];
