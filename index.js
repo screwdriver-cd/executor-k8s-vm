@@ -241,7 +241,8 @@ class K8sVMExecutor extends Executor {
      * @param  {Object}   config                    A configuration object
      * @param  {Object}   [config.annotations]      Set of key value pairs
      * @param  {Integer}  config.buildId            ID for the build
-     * @param  {Integer}  config.id                 pipelineId for the build
+     * @param  {Integer}  config.pipeline.id        pipelineId for the build
+     * @param  {Integer}  config.jobId              jobId for the build
      * @param  {Integer}  config.eventId            eventId for the build
      * @param  {String}   config.container          Container for the build to run in
      * @param  {String}   config.token              JWT for the Build
