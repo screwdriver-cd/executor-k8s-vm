@@ -50,6 +50,7 @@ spec:
          "--build_token", "{{token}}",
          "--build_timeout", "{{build_timeout}}",
          "--launcher_version", "{{launcher_version}}",
+         "--cache_strategy", "{{cache_strategy}}",
          "--cache_path", "{{cache_path}}"
           ]
     env:

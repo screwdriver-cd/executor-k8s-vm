@@ -314,11 +314,13 @@ class K8sVMExecutor extends Executor {
             launcher_image: `${this.launchImage}:${this.launchVersion}`,
             launcher_version: this.launchVersion,
             base_image: this.baseImage,
+            cache_strategy: '',
             cache_path: ''
         };
         let podTemplate;
 
         if (this.cache_path && this.cache_strategy === CACHE_STRATEGY) {
+            podSpec.cache_strategy = this.cache_strategy;
             podSpec.cache_path = this.cache_path;
             if (this.prefix) {
                 podSpec.cache_path = this.cache_path.concat('/').concat(this.prefix);
