@@ -69,6 +69,7 @@ spec:
       name: sdlauncher
     - mountPath: /opt/sd/cache/pipeline
       name: sd-pipeline-cache
+      readOnly: {{volumeReadOnly}}
     - mountPath: /opt/sd/cache/job
       name: sd-job-cache
     - mountPath: /opt/sd/cache/event

@@ -250,7 +250,8 @@ class K8sVMExecutor extends Executor {
      */
     _start(config) {
         const { buildId, jobId, eventId, container, token } = config;
-        const pipelineId = hoek.reach(config, 'pipeline.id', { default: '' });
+        const pipelineId = hoek.reach(config, 'meta.build.pipelineId', { default: '' });
+        const jobName = hoek.reach(config, 'meta.build.jobName', { default: '' });
         const annotations = this.parseAnnotations(
             hoek.reach(config, 'annotations', { default: {} }));
         const cpuConfig = annotations[CPU_RESOURCE];
@@ -260,6 +261,9 @@ class K8sVMExecutor extends Executor {
             LOW: this.lowCpu,
             MICRO: this.microCpu
         };
+        // set volume readonly for PRs
+        const volumeReadOnly = jobName.slice(0, 3) === 'PR-';
+
         let cpu = (cpuConfig in cpuValues) ? cpuValues[cpuConfig] : cpuValues.LOW;
 
         // allow custom cpu value
@@ -312,7 +316,8 @@ class K8sVMExecutor extends Executor {
             launcher_version: this.launchVersion,
             base_image: this.baseImage,
             cache_strategy: '',
-            cache_path: ''
+            cache_path: '',
+            volumeReadOnly
         };
         let podTemplate;
 
