@@ -267,7 +267,11 @@ describe('index', () => {
                 }
             },
             prefix: 'beta_',
-            launchVersion: 'v1.2.3'
+            launchVersion: 'v1.2.3',
+            cache: {
+                strategy: 's3',
+                path: '/test'
+            }
         });
         assert.equal(executor.buildTimeout, 30);
         assert.equal(executor.maxBuildTimeout, 300);
@@ -285,6 +289,8 @@ describe('index', () => {
         assert.equal(executor.highMemory, 5);
         assert.equal(executor.lowMemory, 2);
         assert.equal(executor.microMemory, 1);
+        assert.equal(executor.cache_strategy, 's3');
+        assert.equal(executor.cache_path, '/test');
     });
 
     it('allow empty options', () => {
@@ -404,7 +410,7 @@ describe('index', () => {
             };
 
             const returnMessage = 'Failed to delete pod: '
-                  + `${JSON.stringify(fakeStopErrorResponse.body)}`;
+                + `${JSON.stringify(fakeStopErrorResponse.body)}`;
 
             requestRetryMock.yieldsAsync(null, fakeStopErrorResponse, fakeStopErrorResponse.body);
 
@@ -423,6 +429,7 @@ describe('index', () => {
         let getConfig;
         let putConfig;
         let fakeStartConfig;
+        let fakeStartConfigWithCache;
 
         const fakeStartResponse = {
             statusCode: 201,
@@ -509,6 +516,12 @@ describe('index', () => {
                 apiUri: testApiUri
             };
 
+            fakeStartConfigWithCache = fakeStartConfig;
+
+            fakeStartConfigWithCache.jobId = 1;
+            fakeStartConfigWithCache.eventId = 2;
+            fakeStartConfigWithCache.pipeline = { id: 3, scmContext: 'test' };
+
             requestRetryMock.withArgs(sinon.match({ method: 'POST' })).yieldsAsync(
                 null, fakeStartResponse, fakeStartResponse.body);
             requestRetryMock.withArgs(sinon.match({ method: 'GET' })).yieldsAsync(
@@ -523,6 +536,22 @@ describe('index', () => {
                 assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             })
         );
+
+        it('successfully calls start with cache', () => {
+            const options = _.assign({}, executorOptions, {
+                cache: {
+                    strategy: 'disk',
+                    path: '/test'
+                }
+            });
+
+            executor = new Executor(options);
+            executor.start(fakeStartConfigWithCache)
+                .then(() => {
+                    assert.calledWith(requestRetryMock.firstCall, postConfig);
+                    assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+                });
+        });
 
         it('successfully calls start and update hostname', () => {
             const dateNow = Date.now();
@@ -813,7 +842,7 @@ describe('index', () => {
                 }
             };
             const returnMessage = 'Failed to get pod status:' +
-                        `${JSON.stringify(returnResponse.body, null, 2)}`;
+                `${JSON.stringify(returnResponse.body, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
@@ -835,7 +864,7 @@ describe('index', () => {
                 }
             };
             const returnMessage = 'Failed to create pod. Pod status is:' +
-                        `${JSON.stringify(returnResponse.body.status, null, 2)}`;
+                `${JSON.stringify(returnResponse.body.status, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
@@ -888,7 +917,7 @@ describe('index', () => {
                 }
             };
             const returnMessage = 'Failed to create pod. Pod status is:' +
-                        `${JSON.stringify(returnResponse.body.status, null, 2)}`;
+                `${JSON.stringify(returnResponse.body.status, null, 2)}`;
 
             requestRetryMock.withArgs(getConfig).yieldsAsync(
                 null, returnResponse, returnResponse.body);
