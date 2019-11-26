@@ -138,8 +138,8 @@ class K8sVMExecutor extends Executor {
      * @param  {Object} [options.requestretry]                        Options for the requestretry (https://github.com/FGRibreau/node-request-retry)
      * @param  {Number} [options.requestretry.retryDelay]             Value for retryDelay option of the requestretry
      * @param  {Number} [options.requestretry.maxAttempts]            Value for maxAttempts option of the requestretry
-     * @param  {String} [options.cache.strategy]                      Value for build cache - s3, disk
-     * @param  {String} [options.cache.path]                          Value for build cache path if options.cache.strategy is disk
+     * @param  {String} [options.ecosystem.cache.strategy]            Value for build cache - s3, disk
+     * @param  {String} [options.ecosystem.cache.path]                Value for build cache path if options.cache.strategy is disk
      */
     constructor(options = {}) {
         super();
@@ -196,8 +196,8 @@ class K8sVMExecutor extends Executor {
 
         this.nodeSelectors = hoek.reach(options, 'kubernetes.nodeSelectors');
         this.preferredNodeSelectors = hoek.reach(options, 'kubernetes.preferredNodeSelectors');
-        this.cache_strategy = hoek.reach(options, 'cache.strategy', { default: 's3' });
-        this.cache_path = hoek.reach(options, 'cache.path', { default: '' });
+        this.cache_strategy = hoek.reach(options, 'ecosystem.cache.strategy', { default: 's3' });
+        this.cache_path = hoek.reach(options, 'ecosystem.cache.path', { default: '/' });
     }
 
     /**
@@ -316,15 +316,13 @@ class K8sVMExecutor extends Executor {
             launcher_image: `${this.launchImage}:${this.launchVersion}`,
             launcher_version: this.launchVersion,
             base_image: this.baseImage,
-            cache_strategy: '',
-            cache_path: '',
+            cache_strategy: this.cache_strategy,
+            cache_path: this.cache_path,
             volumeReadOnly
         };
         let podTemplate;
 
         if (this.cache_path && this.cache_strategy === DISK_CACHE_STRATEGY) {
-            podSpec.cache_strategy = this.cache_strategy;
-            podSpec.cache_path = this.cache_path;
             if (this.prefix) {
                 podSpec.cache_path = this.cache_path.concat('/').concat(this.prefix);
             }
@@ -491,10 +489,10 @@ class K8sVMExecutor extends Executor {
     }
 
     /**
-    * Retreive stats for the executor
-    * @method stats
-    * @param  {Response} Object          Object containing stats for the executor
-    */
+     * Retreive stats for the executor
+     * @method stats
+     * @param  {Response} Object          Object containing stats for the executor
+     */
     stats() {
         return this.breaker.stats();
     }
