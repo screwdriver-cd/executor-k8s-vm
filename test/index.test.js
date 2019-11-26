@@ -268,9 +268,11 @@ describe('index', () => {
             },
             prefix: 'beta_',
             launchVersion: 'v1.2.3',
-            cache: {
-                strategy: 's3',
-                path: '/test'
+            ecosystem: {
+                cache: {
+                    strategy: 's3',
+                    path: '/test'
+                }
             }
         });
         assert.equal(executor.buildTimeout, 30);
@@ -539,9 +541,11 @@ describe('index', () => {
 
         it('successfully calls start with cache', () => {
             const options = _.assign({}, executorOptions, {
-                cache: {
-                    strategy: 'disk',
-                    path: '/test'
+                ecosystem: {
+                    cache: {
+                        strategy: 'disk',
+                        path: '/test'
+                    }
                 }
             });
 
