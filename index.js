@@ -196,8 +196,12 @@ class K8sVMExecutor extends Executor {
 
         this.nodeSelectors = hoek.reach(options, 'kubernetes.nodeSelectors');
         this.preferredNodeSelectors = hoek.reach(options, 'kubernetes.preferredNodeSelectors');
-        this.cache_strategy = hoek.reach(options, 'ecosystem.cache.strategy', { default: 's3' });
-        this.cache_path = hoek.reach(options, 'ecosystem.cache.path', { default: '/' });
+        this.cacheStrategy = hoek.reach(options, 'ecosystem.cache.strategy', { default: 's3' });
+        this.cachePath = hoek.reach(options, 'ecosystem.cache.path', { default: '/' });
+        this.cacheCompress = hoek.reach(options, 'ecosystem.cache.compress', { default: 'false' });
+        this.cacheMd5Check = hoek.reach(options, 'ecosystem.cache.md5check', { default: 'false' });
+        this.cacheMaxSizeInMB = hoek.reach(options,
+            'ecosystem.cache.max_size_mb', { default: 0 });
     }
 
     /**
@@ -316,8 +320,11 @@ class K8sVMExecutor extends Executor {
             launcher_image: `${this.launchImage}:${this.launchVersion}`,
             launcher_version: this.launchVersion,
             base_image: this.baseImage,
-            cache_strategy: this.cache_strategy,
-            cache_path: this.cache_path,
+            cache_strategy: this.cacheStrategy,
+            cache_path: this.cachePath,
+            cache_compress: this.cacheCompress,
+            cache_md5check: this.cacheMd5Check,
+            cache_max_size_mb: this.cacheMaxSizeInMB,
             volumeReadOnly
         };
         let podTemplate;
