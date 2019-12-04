@@ -271,7 +271,10 @@ describe('index', () => {
             ecosystem: {
                 cache: {
                     strategy: 's3',
-                    path: '/test'
+                    path: '/test',
+                    compress: 'true',
+                    md5check: 'true',
+                    max_size_mb: 2048
                 }
             }
         });
@@ -291,8 +294,11 @@ describe('index', () => {
         assert.equal(executor.highMemory, 5);
         assert.equal(executor.lowMemory, 2);
         assert.equal(executor.microMemory, 1);
-        assert.equal(executor.cache_strategy, 's3');
-        assert.equal(executor.cache_path, '/test');
+        assert.equal(executor.cacheStrategy, 's3');
+        assert.equal(executor.cachePath, '/test');
+        assert.equal(executor.cacheCompress, 'true');
+        assert.equal(executor.cacheMd5Check, 'true');
+        assert.equal(executor.cacheMaxSizeInMB, '2048');
     });
 
     it('allow empty options', () => {
