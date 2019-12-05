@@ -329,9 +329,9 @@ class K8sVMExecutor extends Executor {
         };
         let podTemplate;
 
-        if (this.cache_path && this.cache_strategy === DISK_CACHE_STRATEGY) {
+        if (this.cachePath && this.cacheStrategy === DISK_CACHE_STRATEGY) {
             if (this.prefix) {
-                podSpec.cache_path = this.cache_path.concat('/').concat(this.prefix);
+                podSpec.cache_path = this.cachePath.concat('/').concat(this.prefix);
             }
             podTemplate = tinytim.renderFile(
                 path.resolve(__dirname, './config/pod.cache2disk.yaml.tim'), podSpec);
