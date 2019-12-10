@@ -70,12 +70,12 @@ spec:
       name: sd-workspaces
     - mountPath: /opt/sd
       name: sdlauncher
-    - mountPath: /opt/sd/cache/pipeline
+    - mountPath: /sdpipelinecache
       name: sd-pipeline-cache
       readOnly: {{volumeReadOnly}}
-    - mountPath: /opt/sd/cache/job
+    - mountPath: /sdjobcache
       name: sd-job-cache
-    - mountPath: /opt/sd/cache/event
+    - mountPath: /sdeventcache
       name: sd-event-cache
   initContainers:
   - name: launcher
