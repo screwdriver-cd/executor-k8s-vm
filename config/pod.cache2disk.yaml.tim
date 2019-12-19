@@ -80,10 +80,16 @@ spec:
   initContainers:
   - name: launcher
     image: {{launcher_image}}
-    command: ['/bin/sh', '-c', 'if ! [ -f /opt/launcher/launch ]; then TEMP_DIR=`mktemp -d -p /opt/launcher` && cp -a /opt/sd/* $TEMP_DIR && mkdir -p $TEMP_DIR/hab && cp -a /hab/* $TEMP_DIR/hab && mv $TEMP_DIR/* /opt/launcher && rm -rf $TEMP_DIR || true; else ls /opt/launcher; fi;']
+    command: ['/bin/sh', '-c', 'chmod -R 777 /opt/sdcache && if ! [ -f /opt/launcher/launch ]; then TEMP_DIR=`mktemp -d -p /opt/launcher` && cp -a /opt/sd/* $TEMP_DIR && mkdir -p $TEMP_DIR/hab && cp -a /hab/* $TEMP_DIR/hab && mv $TEMP_DIR/* /opt/launcher && rm -rf $TEMP_DIR || true; else ls /opt/launcher; fi;']
     volumeMounts:
     - mountPath: /opt/launcher
       name: sdlauncher
+    - mountPath: /opt/sdcache/pipeline
+      name: sd-pipeline-cache
+    - mountPath: /opt/sdcache/job
+      name: sd-job-cache
+    - mountPath: /opt/sdcache/event
+      name: sd-event-cache
   volumes:
     - name: hyper-socket
       hostPath:
