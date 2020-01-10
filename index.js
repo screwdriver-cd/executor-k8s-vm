@@ -10,6 +10,7 @@ const requestretry = require('requestretry');
 const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const _ = require('lodash');
+const jwt = require('jsonwebtoken');
 
 const DEFAULT_BUILD_TIMEOUT = 90; // 90 minutes
 const MAX_BUILD_TIMEOUT = 120; // 120 minutes
@@ -27,7 +28,6 @@ const AFFINITY_PREFERRED_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
     'preferredDuringSchedulingIgnoredDuringExecution';
 const PREFERRED_WEIGHT = 100;
 const DISK_CACHE_STRATEGY = 'disk';
-const jwt = require('jsonwebtoken');
 
 /**
  * Parses nodeSelector config and update intended nodeSelector in tolerations
@@ -269,7 +269,7 @@ class K8sVMExecutor extends Executor {
             MICRO: this.microCpu
         };
 
-        // PRs - set pipeline, job cache volume readonly and job cache dir to refer parent job
+        // PRs - set pipeline, job cache volume readonly and job cache dir to parent job cache dir
         const regex = /^PR-([0-9]+)(?::[\w-]+)?$/gi;
         const matched = regex.exec(jobName);
         let volumeReadOnly = false;
