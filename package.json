@@ -59,6 +59,7 @@
         "requestretry": "^4.0.0",
         "screwdriver-data-schema": "^19.1.1",
         "screwdriver-executor-base": "^7.0.0",
-        "tinytim": "^0.1.1"
+        "tinytim": "^0.1.1",
+        "jsonwebtoken": "^7.1.6"
     }
 }

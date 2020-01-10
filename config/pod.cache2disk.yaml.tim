@@ -75,6 +75,7 @@ spec:
       readOnly: {{volumeReadOnly}}
     - mountPath: /opt/sd/cache/job
       name: sd-job-cache
+      readOnly: {{volumeReadOnly}}
     - mountPath: /opt/sd/cache/event
       name: sd-event-cache
   initContainers:
