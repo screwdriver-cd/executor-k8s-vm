@@ -281,7 +281,6 @@ class K8sVMExecutor extends Executor {
             jobId = hoek.reach(decodedToken.payload,
                 'prParentJobId', { default: jobId });
         }
-        //
 
         let cpu = (cpuConfig in cpuValues) ? cpuValues[cpuConfig] : cpuValues.LOW;
 
