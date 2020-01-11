@@ -10,6 +10,7 @@ const requestretry = require('requestretry');
 const tinytim = require('tinytim');
 const yaml = require('js-yaml');
 const _ = require('lodash');
+const jwt = require('jsonwebtoken');
 
 const DEFAULT_BUILD_TIMEOUT = 90; // 90 minutes
 const MAX_BUILD_TIMEOUT = 120; // 120 minutes
@@ -254,7 +255,8 @@ class K8sVMExecutor extends Executor {
      * @return {Promise}
      */
     _start(config) {
-        const { buildId, jobId, eventId, container, token } = config;
+        const { buildId, eventId, container, token } = config;
+        let jobId = hoek.reach(config, 'jobId', { default: '' });
         const pipelineId = hoek.reach(config, 'pipeline.id', { default: '' });
         const jobName = hoek.reach(config, 'jobName', { default: '' });
         const annotations = this.parseAnnotations(
@@ -266,8 +268,19 @@ class K8sVMExecutor extends Executor {
             LOW: this.lowCpu,
             MICRO: this.microCpu
         };
-        // set pipeline cache volume readonly for PRs
-        const volumeReadOnly = jobName.slice(0, 3) === 'PR-';
+
+        // PRs - set pipeline, job cache volume readonly and job cache dir to parent job cache dir
+        const regex = /^PR-([0-9]+)(?::[\w-]+)?$/gi;
+        const matched = regex.exec(jobName);
+        let volumeReadOnly = false;
+
+        if (matched && matched.length === 2) {
+            const decodedToken = jwt.decode(token, { complete: true });
+
+            volumeReadOnly = true;
+            jobId = hoek.reach(decodedToken.payload,
+                'prParentJobId', { default: jobId });
+        }
 
         let cpu = (cpuConfig in cpuValues) ? cpuValues[cpuConfig] : cpuValues.LOW;
 
