@@ -1,65 +1,69 @@
 {
-    "name": "screwdriver-executor-k8s-vm",
-    "version": "2.0.0",
-    "description": "Kubernetes VM Executor plugin for Screwdriver",
-    "main": "index.js",
-    "scripts": {
-        "pretest": "eslint .",
-        "test": "jenkins-mocha --recursive --timeout 5000",
-        "semantic-release": "semantic-release pre && npm publish && semantic-release post"
-    },
-    "engines": {
-        "node": ">=6.0.0"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git@github.com:screwdriver-cd/executor-k8s-vm.git"
-    },
-    "homepage": "https://github.com/screwdriver-cd/executor-k8s-vm",
-    "bugs": "https://github.com/screwdriver-cd/executor-k8s-vm/issues",
-    "keywords": [
-        "screwdriver",
-        "yahoo"
-    ],
-    "license": "BSD-3-Clause",
-    "author": "Dao Lam <daolam112@gmail.com>",
-    "contributors": [
-        "Dao Lam <daolam112@gmail.com>",
-        "Darren Matsumoto <aeneascorrupt@gmail.com>",
-        "Ian Fox <ianfox97@gmail.com>",
-        "Jeremiah Wuenschel <jeremiah.wuenschel@gmail.com>",
-        "Min Zhang <minzhangcmu@gmail.com>",
-        "Peter Peterson <jedipetey@gmail.com>",
-        "Reetika Rastogi <r3rastogi@gmail.com>",
-        "St. John Johnson <st.john.johnson@gmail.com",
-        "Tiffany Kyi <tiffanykyi@gmail.com>"
-    ],
-    "release": {
-        "debug": false,
-        "verifyConditions": {
-            "path": "./node_modules/semantic-release/src/lib/plugin-noop.js"
-        }
-    },
-    "devDependencies": {
-        "chai": "^3.5.0",
-        "eslint": "^4.19.1",
-        "eslint-config-screwdriver": "^3.0.1",
-        "jenkins-mocha": "^8.0.0",
-        "mockery": "^2.0.0",
-        "rewire": "^3.0.2",
-        "sinon": "^5.0.10"
-    },
-    "dependencies": {
-        "circuit-fuses": "^4.0.4",
-        "eslint-plugin-import": "^2.16.0",
-        "hoek": "^5.0.4",
-        "js-yaml": "^3.12.2",
-        "lodash": "^4.17.11",
-        "randomstring": "^1.1.5",
-        "requestretry": "^4.0.0",
-        "screwdriver-data-schema": "^19.1.1",
-        "screwdriver-executor-base": "^7.0.0",
-        "tinytim": "^0.1.1",
-        "jsonwebtoken": "^8.5.1"
+  "name": "screwdriver-executor-k8s-vm",
+  "version": "2.0.0",
+  "description": "Kubernetes VM Executor plugin for Screwdriver",
+  "main": "index.js",
+  "scripts": {
+    "pretest": "eslint .",
+    "test": "jenkins-mocha --recursive --timeout 5000",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
+  },
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:screwdriver-cd/executor-k8s-vm.git"
+  },
+  "homepage": "https://github.com/screwdriver-cd/executor-k8s-vm",
+  "bugs": "https://github.com/screwdriver-cd/executor-k8s-vm/issues",
+  "keywords": [
+    "screwdriver",
+    "yahoo"
+  ],
+  "license": "BSD-3-Clause",
+  "author": "Dao Lam <daolam112@gmail.com>",
+  "contributors": [
+    "Dao Lam <daolam112@gmail.com>",
+    "Darren Matsumoto <aeneascorrupt@gmail.com>",
+    "Ian Fox <ianfox97@gmail.com>",
+    "Jeremiah Wuenschel <jeremiah.wuenschel@gmail.com>",
+    "Min Zhang <minzhangcmu@gmail.com>",
+    "Peter Peterson <jedipetey@gmail.com>",
+    "Reetika Rastogi <r3rastogi@gmail.com>",
+    "St. John Johnson <st.john.johnson@gmail.com",
+    "Tiffany Kyi <tiffanykyi@gmail.com>"
+  ],
+  "release": {
+    "debug": false,
+    "verifyConditions": {
+      "path": "./node_modules/semantic-release/src/lib/plugin-noop.js"
     }
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "eslint": "^4.19.1",
+    "eslint-config-screwdriver": "^3.0.1",
+    "jenkins-mocha": "^8.0.0",
+    "mockery": "^2.0.0",
+    "rewire": "^3.0.2",
+    "sinon": "^5.0.10"
+  },
+  "dependencies": {
+    "circuit-fuses": "^4.0.4",
+    "eslint-plugin-import": "^2.16.0",
+    "hoek": "^5.0.4",
+    "js-yaml": "^3.12.2",
+    "lodash": "^4.17.11",
+    "randomstring": "^1.1.5",
+    "requestretry": "^4.0.0",
+    "screwdriver-data-schema": "^19.1.1",
+    "screwdriver-executor-base": "^7.0.0",
+    "tinytim": "^0.1.1",
+    "jsonwebtoken": "^8.5.1",
+    "snyk": "^1.316.1"
+  },
+  "snyk": true
 }
