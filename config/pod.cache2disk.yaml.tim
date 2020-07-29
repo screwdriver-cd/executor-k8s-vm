@@ -57,7 +57,7 @@ spec:
          "--cache_max_size_mb", "{{cache_max_size_mb}}"
           ]
     env:
-    - name: PUSHGATEWAY_URL
+    - name: SD_PUSHGATEWAY_URL
       value: "{{pushgateway_url}}"
     - name: NODE_ID
       valueFrom:
