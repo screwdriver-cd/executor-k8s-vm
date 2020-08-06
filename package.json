@@ -1,11 +1,11 @@
 {
     "name": "screwdriver-executor-k8s-vm",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "description": "Kubernetes VM Executor plugin for Screwdriver",
     "main": "index.js",
     "scripts": {
         "pretest": "eslint .",
-        "test": "jenkins-mocha --recursive --timeout 5000",
+        "test": "mocha --recursive --timeout 5000",
         "semantic-release": "semantic-release pre && npm publish && semantic-release post"
     },
     "engines": {
@@ -44,22 +44,22 @@
         "chai": "^3.5.0",
         "eslint": "^4.19.1",
         "eslint-config-screwdriver": "^3.0.1",
-        "jenkins-mocha": "^8.0.0",
+        "mocha": "^8.1.1",
         "mockery": "^2.0.0",
         "rewire": "^3.0.2",
         "sinon": "^5.0.10"
     },
     "dependencies": {
+        "@hapi/hoek": "^9.0.4",
         "circuit-fuses": "^4.0.4",
         "eslint-plugin-import": "^2.16.0",
-        "hoek": "^5.0.4",
         "js-yaml": "^3.12.2",
+        "jsonwebtoken": "^8.5.1",
         "lodash": "^4.17.11",
         "randomstring": "^1.1.5",
         "requestretry": "^4.0.0",
-        "screwdriver-data-schema": "^19.1.1",
-        "screwdriver-executor-base": "^7.0.0",
-        "tinytim": "^0.1.1",
-        "jsonwebtoken": "^8.5.1"
+        "screwdriver-data-schema": "git://github.com/screwdriver-cd/data-schema.git#hapi-v19",
+        "screwdriver-executor-base": "git://github.com/screwdriver-cd/executor-base.git#hapi-v19",
+        "tinytim": "^0.1.1"
     }
 }
