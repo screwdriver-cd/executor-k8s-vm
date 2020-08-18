@@ -54,7 +54,8 @@ spec:
          "--cache_path", "{{cache_path}}",
          "--cache_compress", "{{cache_compress}}",
          "--cache_md5check", "{{cache_md5check}}",
-         "--cache_max_size_mb", "{{cache_max_size_mb}}"
+         "--cache_max_size_mb", "{{cache_max_size_mb}}",
+         "--cache-max_go_threads", "{{cache_max_go_threads}}"
           ]
     env:
     - name: SD_PUSHGATEWAY_URL
