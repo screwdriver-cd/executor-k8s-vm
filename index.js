@@ -344,7 +344,7 @@ class K8sVMExecutor extends Executor {
             cache_compress: this.cacheCompress,
             cache_md5check: this.cacheMd5Check,
             cache_max_size_mb: this.cacheMaxSizeInMB,
-            max_go_threads: this.cacheMaxGoThreads,
+            cache_max_go_threads: this.cacheMaxGoThreads,
             volumeReadOnly
         };
         let podTemplate;
