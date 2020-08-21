@@ -1,6 +1,6 @@
 {
     "name": "screwdriver-executor-k8s-vm",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Kubernetes VM Executor plugin for Screwdriver",
     "main": "index.js",
     "scripts": {
@@ -58,8 +58,8 @@
         "lodash": "^4.17.11",
         "randomstring": "^1.1.5",
         "requestretry": "^4.0.0",
-        "screwdriver-data-schema": "git://github.com/screwdriver-cd/data-schema.git#hapi-v19",
-        "screwdriver-executor-base": "git://github.com/screwdriver-cd/executor-base.git#hapi-v19",
+        "screwdriver-data-schema": "^20.0.0",
+        "screwdriver-executor-base": "^8.0.0",
         "tinytim": "^0.1.1"
     }
 }
