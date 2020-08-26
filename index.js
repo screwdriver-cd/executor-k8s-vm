@@ -106,41 +106,45 @@ class K8sVMExecutor extends Executor {
     /**
      * Constructor
      * @method constructor
-     * @param  {Object} options                                       Configuration options
-     * @param  {Object} options.ecosystem                             Screwdriver Ecosystem
-     * @param  {Object} options.ecosystem.api                         Routable URI to Screwdriver API
-     * @param  {Object} [options.ecosystem.pushgatewayUrl]            Pushgateway URL for Prometheus
-     * @param  {Object} options.ecosystem.store                       Routable URI to Screwdriver Store
-     * @param  {Object} options.ecosystem.ui                          Routable URI to Screwdriver UI
-     * @param  {Object} options.kubernetes                            Kubernetes configuration
-     * @param  {String} [options.kubernetes.token]                    API Token (loaded from /var/run/secrets/kubernetes.io/serviceaccount/token if not provided)
-     * @param  {String} [options.kubernetes.host=kubernetes.default]  Kubernetes hostname
-     * @param  {String} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
-     * @param  {String} [options.kubernetes.baseImage]                Base image for the pod
-     * @param  {Number} [options.kubernetes.buildTimeout=90]          Number of minutes to allow a build to run before considering it is timed out
-     * @param  {Number} [options.kubernetes.maxBuildTimeout=120]      Max timeout user can configure up to (in minutes)
-     * @param  {String} [options.kubernetes.resources.cpu.max=12]     Upper bound for custom CPU value (in cores)
-     * @param  {String} [options.kubernetes.resources.cpu.turbo=12]   Value for TURBO CPU (in cores)
-     * @param  {String} [options.kubernetes.resources.cpu.high=6]     Value for HIGH CPU (in cores)
-     * @param  {Number} [options.kubernetes.resources.cpu.low=2]      Value for LOW CPU (in cores)
-     * @param  {Number} [options.kubernetes.resources.cpu.micro=1]    Value for MICRO CPU (in cores)
-     * @param  {String} [options.kubernetes.resources.memory.max=16]  Upper bound for custom memory value (in GB)
-     * @param  {Number} [options.kubernetes.resources.memory.turbo=16]Value for TURBO memory (in GB)
-     * @param  {Number} [options.kubernetes.resources.memory.high=12] Value for HIGH memory (in GB)
-     * @param  {Number} [options.kubernetes.resources.memory.low=2]   Value for LOW memory (in GB)
-     * @param  {Number} [options.kubernetes.resources.memory.micro=1] Value for MICRO memory (in GB)
-     * @param  {String} [options.kubernetes.resources.disk.space]     Value for disk space label (e.g.: screwdriver.cd/disk)
-     * @param  {String} [options.kubernetes.resources.disk.speed]     Value for disk speed label (e.g.: screwdriver.cd/diskSpeed)
-     * @param  {Number} [options.kubernetes.jobsNamespace=default]    Pods namespace for Screwdriver Jobs
-     * @param  {Object} [options.kubernetes.nodeSelectors]            Object representing node label-value pairs
-     * @param  {String} [options.launchVersion=stable]                Launcher container version to use
-     * @param  {String} [options.prefix='']                           Prefix for job name
-     * @param  {String} [options.fusebox]                             Options for the circuit breaker (https://github.com/screwdriver-cd/circuit-fuses)
-     * @param  {Object} [options.requestretry]                        Options for the requestretry (https://github.com/FGRibreau/node-request-retry)
-     * @param  {Number} [options.requestretry.retryDelay]             Value for retryDelay option of the requestretry
-     * @param  {Number} [options.requestretry.maxAttempts]            Value for maxAttempts option of the requestretry
-     * @param  {String} [options.ecosystem.cache.strategy]            Value for build cache - s3, disk
-     * @param  {String} [options.ecosystem.cache.path]                Value for build cache path if options.cache.strategy is disk
+     * @param  {Object} options                                         Configuration options
+     * @param  {Object} options.ecosystem                               Screwdriver Ecosystem
+     * @param  {Object} options.ecosystem.api                           Routable URI to Screwdriver API
+     * @param  {Object} [options.ecosystem.pushgatewayUrl]              Pushgateway URL for Prometheus
+     * @param  {Object} options.ecosystem.store                         Routable URI to Screwdriver Store
+     * @param  {Object} options.ecosystem.ui                            Routable URI to Screwdriver UI
+     * @param  {Object} options.kubernetes                              Kubernetes configuration
+     * @param  {String} [options.kubernetes.token]                      API Token (loaded from /var/run/secrets/kubernetes.io/serviceaccount/token if not provided)
+     * @param  {String} [options.kubernetes.host=kubernetes.default]    Kubernetes hostname
+     * @param  {String} [options.kubernetes.jobsNamespace=default]      Pods namespace for Screwdriver Jobs
+     * @param  {String} [options.kubernetes.baseImage]                  Base image for the pod
+     * @param  {Number} [options.kubernetes.buildTimeout=90]            Number of minutes to allow a build to run before considering it is timed out
+     * @param  {Number} [options.kubernetes.maxBuildTimeout=120]        Max timeout user can configure up to (in minutes)
+     * @param  {String} [options.kubernetes.resources.cpu.max=12]       Upper bound for custom CPU value (in cores)
+     * @param  {String} [options.kubernetes.resources.cpu.turbo=12]     Value for TURBO CPU (in cores)
+     * @param  {String} [options.kubernetes.resources.cpu.high=6]       Value for HIGH CPU (in cores)
+     * @param  {Number} [options.kubernetes.resources.cpu.low=2]        Value for LOW CPU (in cores)
+     * @param  {Number} [options.kubernetes.resources.cpu.micro=1]      Value for MICRO CPU (in cores)
+     * @param  {String} [options.kubernetes.resources.memory.max=16]    Upper bound for custom memory value (in GB)
+     * @param  {Number} [options.kubernetes.resources.memory.turbo=16]  Value for TURBO memory (in GB)
+     * @param  {Number} [options.kubernetes.resources.memory.high=12]   Value for HIGH memory (in GB)
+     * @param  {Number} [options.kubernetes.resources.memory.low=2]     Value for LOW memory (in GB)
+     * @param  {Number} [options.kubernetes.resources.memory.micro=1]   Value for MICRO memory (in GB)
+     * @param  {String} [options.kubernetes.resources.disk.space]       Value for disk space label (e.g.: screwdriver.cd/disk)
+     * @param  {String} [options.kubernetes.resources.disk.speed]       Value for disk speed label (e.g.: screwdriver.cd/diskSpeed)
+     * @param  {Number} [options.kubernetes.jobsNamespace=default]      Pods namespace for Screwdriver Jobs
+     * @param  {Object} [options.kubernetes.nodeSelectors]              Object representing node label-value pairs
+     * @param  {String} [options.launchVersion=stable]                  Launcher container version to use
+     * @param  {String} [options.prefix='']                             Prefix for job name
+     * @param  {String} [options.fusebox]                               Options for the circuit breaker (https://github.com/screwdriver-cd/circuit-fuses)
+     * @param  {Object} [options.requestretry]                          Options for the requestretry (https://github.com/FGRibreau/node-request-retry)
+     * @param  {Number} [options.requestretry.retryDelay]               Value for retryDelay option of the requestretry
+     * @param  {Number} [options.requestretry.maxAttempts]              Value for maxAttempts option of the requestretry
+     * @param  {String} [options.ecosystem.cache.strategy]              Value for build cache - s3, disk
+     * @param  {String} [options.ecosystem.cache.path]                  Value for build cache path if options.cache.strategy is disk
+     * @param  {String}  [options.ecosystem.cache.compress=false]       Value for build cache compress - true / false; used only when cache.strategy is disk
+     * @param  {String}  [options.ecosystem.cache.md5check=false]       Value for build cache md5check - true / false; used only when cache.strategy is disk
+     * @param  {String}  [options.ecosystem.cache.max_size_mb=0]        Value for build cache max size in mb; used only when cache.strategy is disk
+     * @param  {String}  [options.ecosystem.cache.max_go_threads=10000] Value for build cache max go threads; used only when cache.strategy is disk
      */
     constructor(options = {}) {
         super();
@@ -203,6 +207,8 @@ class K8sVMExecutor extends Executor {
         this.cacheMd5Check = hoek.reach(options, 'ecosystem.cache.md5check', { default: 'false' });
         this.cacheMaxSizeInMB = hoek.reach(options,
             'ecosystem.cache.max_size_mb', { default: 0 });
+        this.cacheMaxGoThreads = hoek.reach(options,
+            'ecosystem.cache.max_go_threads', { default: 10000 });
     }
 
     /**
@@ -338,6 +344,7 @@ class K8sVMExecutor extends Executor {
             cache_compress: this.cacheCompress,
             cache_md5check: this.cacheMd5Check,
             cache_max_size_mb: this.cacheMaxSizeInMB,
+            cache_max_go_threads: this.cacheMaxGoThreads,
             volumeReadOnly
         };
         let podTemplate;

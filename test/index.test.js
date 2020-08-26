@@ -299,6 +299,7 @@ describe('index', () => {
         assert.equal(executor.cacheCompress, 'true');
         assert.equal(executor.cacheMd5Check, 'true');
         assert.equal(executor.cacheMaxSizeInMB, '2048');
+        assert.equal(executor.cacheMaxGoThreads, '10000');
     });
 
     it('allow empty options', () => {
