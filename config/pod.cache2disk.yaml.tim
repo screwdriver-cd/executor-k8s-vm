@@ -20,6 +20,7 @@ spec:
               values:
               - screwdriver-vm
   restartPolicy: Never
+  terminationGracePeriodSeconds: {{termination_grace_period_seconds}}
   containers:
   - name: vm-launcher
     image: {{base_image}}
