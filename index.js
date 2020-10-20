@@ -28,6 +28,7 @@ const AFFINITY_PREFERRED_NODE_SELECTOR_PATH = 'spec.affinity.nodeAffinity.' +
     'preferredDuringSchedulingIgnoredDuringExecution';
 const PREFERRED_WEIGHT = 100;
 const DISK_CACHE_STRATEGY = 'disk';
+const TERMINATION_GRACE_PERIOD_SECONDS = 'terminationGracePeriodSeconds';
 
 /**
  * Parses nodeSelector config and update intended nodeSelector in tolerations
@@ -133,6 +134,7 @@ class K8sVMExecutor extends Executor {
      * @param  {String} [options.kubernetes.resources.disk.speed]       Value for disk speed label (e.g.: screwdriver.cd/diskSpeed)
      * @param  {Number} [options.kubernetes.jobsNamespace=default]      Pods namespace for Screwdriver Jobs
      * @param  {Object} [options.kubernetes.nodeSelectors]              Object representing node label-value pairs
+     * @param  {String} [options.kubernetes.terminationGracePeriodSeconds] TerminationGracePeriodSeconds setting for k8s pods
      * @param  {String} [options.launchVersion=stable]                  Launcher container version to use
      * @param  {String} [options.prefix='']                             Prefix for job name
      * @param  {String} [options.fusebox]                               Options for the circuit breaker (https://github.com/screwdriver-cd/circuit-fuses)
@@ -168,6 +170,7 @@ class K8sVMExecutor extends Executor {
         this.baseImage = this.kubernetes.baseImage;
         this.buildTimeout = this.kubernetes.buildTimeout || DEFAULT_BUILD_TIMEOUT;
         this.maxBuildTimeout = this.kubernetes.maxBuildTimeout || MAX_BUILD_TIMEOUT;
+        this.terminationGracePeriodSeconds = this.kubernetes.terminationGracePeriodSeconds || 30;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(requestretry, options.fusebox);
         this.retryDelay = this.requestretryOptions.retryDelay || DEFAULT_RETRYDELAY;
@@ -320,6 +323,12 @@ class K8sVMExecutor extends Executor {
             ? Math.min(annotations[ANNOTATION_BUILD_TIMEOUT], this.maxBuildTimeout)
             : this.buildTimeout;
 
+        const terminationGracePeriod = annotations[TERMINATION_GRACE_PERIOD_SECONDS]
+            ? Math.max(
+                annotations[TERMINATION_GRACE_PERIOD_SECONDS], this.terminationGracePeriodSeconds
+            )
+            : this.terminationGracePeriodSeconds;
+
         const podSpec = {
             cpu,
             memory,
@@ -337,6 +346,7 @@ class K8sVMExecutor extends Executor {
             pushgateway_url: hoek.reach(this.ecosystem, 'pushgatewayUrl', { default: '' }),
             token,
             launcher_image: `${this.launchImage}:${this.launchVersion}`,
+            termination_grace_period_seconds: terminationGracePeriod,
             launcher_version: this.launchVersion,
             base_image: this.baseImage,
             cache_strategy: this.cacheStrategy,

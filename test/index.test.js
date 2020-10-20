@@ -23,6 +23,7 @@ metadata:
 command:
 - "/opt/sd/launch {{api_uri}} {{store_uri}} {{token}} {{build_timeout}} {{build_id}}"
 spec:
+  terminationGracePeriodSeconds: {{termination_grace_period_seconds}}
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -53,6 +54,7 @@ describe('index', () => {
     const testLaunchVersion = 'stable';
     const podsUrl = 'https://kubernetes.default/api/v1/namespaces/default/pods';
     const testSpec = {
+        terminationGracePeriodSeconds: 30,
         tolerations: [{
             key: 'key',
             value: 'value',
@@ -85,6 +87,7 @@ describe('index', () => {
             effect: 'NoSchedule',
             operator: 'Equal'
         }],
+        terminationGracePeriodSeconds: 30,
         affinity: {
             nodeAffinity: {
                 requiredDuringSchedulingIgnoredDuringExecution: {
@@ -106,6 +109,7 @@ describe('index', () => {
         }
     };
     const testSpecWithDiskSpeed = {
+        terminationGracePeriodSeconds: 30,
         tolerations: [{
             key: 'screwdriver.cd/diskspeed',
             value: 'high',
@@ -138,6 +142,7 @@ describe('index', () => {
         }
     };
     const testPreferredSpec = {
+        terminationGracePeriodSeconds: 60,
         affinity: {
             nodeAffinity: {
                 preferredDuringSchedulingIgnoredDuringExecution: [
@@ -163,6 +168,7 @@ describe('index', () => {
         }
     };
     const testPodSpec = {
+        terminationGracePeriodSeconds: 30,
         affinity: {
             podAntiAffinity: {
                 preferredDuringSchedulingIgnoredDuringExecution: [
@@ -191,6 +197,7 @@ describe('index', () => {
             store: testStoreUri
         },
         kubernetes: {
+            baseImage: 'hyperctl',
             nodeSelectors: {},
             preferredNodeSelectors: {}
         },
@@ -216,6 +223,8 @@ describe('index', () => {
         fsMock.readFileSync.withArgs('/var/run/secrets/kubernetes.io/serviceaccount/token')
             .returns('api_key');
         fsMock.readFileSync.withArgs(sinon.match(/config\/pod.yaml.tim/))
+            .returns(TEST_TIM_YAML);
+        fsMock.readFileSync.withArgs(sinon.match(/config\/pod.cache2disk.yaml.tim/))
             .returns(TEST_TIM_YAML);
         fsMock.existsSync.returns(true);
 
@@ -251,6 +260,7 @@ describe('index', () => {
                 host: 'kubernetes2',
                 jobsNamespace: 'baz',
                 baseImage: 'hyperctl',
+                terminationGracePeriodSeconds: 60,
                 resources: {
                     cpu: {
                         turbo: 10,
@@ -300,6 +310,7 @@ describe('index', () => {
         assert.equal(executor.cacheMd5Check, 'true');
         assert.equal(executor.cacheMaxSizeInMB, '2048');
         assert.equal(executor.cacheMaxGoThreads, '10000');
+        assert.equal(executor.terminationGracePeriodSeconds, 60);
     });
 
     it('allow empty options', () => {
@@ -307,6 +318,7 @@ describe('index', () => {
         executor = new Executor();
         assert.equal(executor.buildTimeout, DEFAULT_BUILD_TIMEOUT);
         assert.equal(executor.maxBuildTimeout, MAX_BUILD_TIMEOUT);
+        assert.equal(executor.terminationGracePeriodSeconds, 30);
         assert.equal(executor.launchVersion, 'stable');
         assert.equal(executor.host, 'kubernetes.default');
         assert.equal(executor.launchVersion, 'stable');
@@ -549,6 +561,8 @@ describe('index', () => {
         it('successfully calls start with cache', () => {
             const options = _.assign({}, executorOptions, {
                 ecosystem: {
+                    api: testApiUri,
+                    store: testStoreUri,
                     cache: {
                         strategy: 'disk',
                         path: '/test'
@@ -557,6 +571,8 @@ describe('index', () => {
             });
 
             executor = new Executor(options);
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
             executor.start(fakeStartConfigWithCache)
                 .then(() => {
                     assert.calledWith(requestRetryMock.firstCall, postConfig);
@@ -1017,6 +1033,16 @@ describe('index', () => {
                 assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
             });
         });
+
+        it('sets the terminationGracePeriodSeconds appropriately when annotation is set', () => {
+            postConfig.body.spec.terminationGracePeriodSeconds = 90;
+            fakeStartConfig.annotations = { 'screwdriver.cd/terminationGracePeriodSeconds': 90 };
+
+            return executor.start(fakeStartConfig).then(() => {
+                assert.calledWith(requestRetryMock.firstCall, postConfig);
+                assert.calledWith(requestRetryMock.secondCall, sinon.match(getConfig));
+            });
+        });
     });
 
     describe('setNodeSelector', () => {
@@ -1029,6 +1055,7 @@ describe('index', () => {
         beforeEach(() => {
             nodeSelectors = null;
             fakeConfig = yaml.safeLoad(TEST_TIM_YAML);
+            fakeConfig.spec.terminationGracePeriodSeconds = 90;
         });
 
         it('does nothing if nodeSelector is not set', () => {
@@ -1060,6 +1087,7 @@ describe('index', () => {
         beforeEach(() => {
             nodeSelectors = null;
             fakeConfig = yaml.safeLoad(TEST_TIM_YAML);
+            fakeConfig.spec.terminationGracePeriodSeconds = 90;
         });
 
         it('does nothing if preferredNodeSelector is not set', () => {
