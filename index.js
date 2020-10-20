@@ -170,7 +170,7 @@ class K8sVMExecutor extends Executor {
         this.baseImage = this.kubernetes.baseImage;
         this.buildTimeout = this.kubernetes.buildTimeout || DEFAULT_BUILD_TIMEOUT;
         this.maxBuildTimeout = this.kubernetes.maxBuildTimeout || MAX_BUILD_TIMEOUT;
-        this.terminationGracePeriodSeconds = this.kubernetes.terminationGracePeriodSeconds || 60;
+        this.terminationGracePeriodSeconds = this.kubernetes.terminationGracePeriodSeconds || 30;
         this.podsUrl = `https://${this.host}/api/v1/namespaces/${this.jobsNamespace}/pods`;
         this.breaker = new Fusebox(requestretry, options.fusebox);
         this.retryDelay = this.requestretryOptions.retryDelay || DEFAULT_RETRYDELAY;
