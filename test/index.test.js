@@ -558,12 +558,11 @@ describe('index', () => {
             })
         );
 
-        it.skip('successfully calls start with cache', () => {
+        it('successfully calls start with cache', () => {
             const options = _.assign({}, executorOptions, {
                 ecosystem: {
                     api: testApiUri,
                     store: testStoreUri,
-                    ui: 'test',
                     cache: {
                         strategy: 'disk',
                         path: '/test'
@@ -572,6 +571,8 @@ describe('index', () => {
             });
 
             executor = new Executor(options);
+            getConfig.retryStrategy = executor.podRetryStrategy;
+
             executor.start(fakeStartConfigWithCache)
                 .then(() => {
                     assert.calledWith(requestRetryMock.firstCall, postConfig);
