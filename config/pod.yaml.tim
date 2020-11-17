@@ -61,6 +61,8 @@ spec:
     env:
     - name: SD_PUSHGATEWAY_URL
       value: "{{pushgateway_url}}"
+    - name: SD_TERMINATION_GRACE_PERIOD_SECONDS
+      value: {{termination_grace_period_seconds}}
     - name: NODE_ID
       valueFrom:
         fieldRef:
