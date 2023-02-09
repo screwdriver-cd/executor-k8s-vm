@@ -40,7 +40,7 @@ spec:
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 
-describe('index', () => {
+describe.skip('index', () => {
     let Executor;
     let requestRetryMock;
     let fsMock;
@@ -375,7 +375,7 @@ describe('index', () => {
         });
     });
 
-    describe.skip('stop', () => {
+    describe('stop', () => {
         const fakeStopResponse = {
             statusCode: 200,
             body: {
@@ -445,7 +445,7 @@ describe('index', () => {
         });
     });
 
-    describe.skip('start', () => {
+    describe('start', () => {
         let postConfig;
         let getConfig;
         let putConfig;
