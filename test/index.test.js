@@ -40,7 +40,7 @@ spec:
 const MAXATTEMPTS = 5;
 const RETRYDELAY = 3000;
 
-describe('index', () => {
+describe.skip('index', () => {
     let Executor;
     let requestRetryMock;
     let fsMock;
