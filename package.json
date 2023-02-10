@@ -34,10 +34,7 @@
         "Tiffany Kyi <tiffanykyi@gmail.com>"
     ],
     "release": {
-        "debug": false,
-        "verifyConditions": {
-            "path": "./node_modules/semantic-release/src/lib/plugin-noop.js"
-        }
+        "debug": false
     },
     "devDependencies": {
         "chai": "^3.5.0",
