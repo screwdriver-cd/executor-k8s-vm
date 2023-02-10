@@ -1,20 +1,20 @@
 shared:
-    image: node:18
+  image: node:18
 
 jobs:
-    main:
-        environment:
-            SD_SONAR_OPTS: "-Dsonar.sources=lib -Dsonar.tests=test -Dsonar.javascript.lcov.reportPaths=artifacts/coverage/lcov.info -Dsonar.testExecutionReportPaths=artifacts/report/test.xml"
-        requires: [~pr, ~commit]
-        steps:
-            - install: npm install
-            - test: npm test
+  main:
+    environment:
+      SD_SONAR_OPTS: "-Dsonar.sources=index.js -Dsonar.tests=test -Dsonar.javascript.lcov.reportPaths=artifacts/coverage/lcov.info -Dsonar.testExecutionReportPaths=artifacts/report/test.xml"
+    requires: [ ~pr, ~commit ]
+    steps:
+      - install: npm install
+      - test: npm test
 
-    publish:
-        requires: main
-        template: screwdriver-cd/semantic-release
-        secrets:
-            # Publishing to NPM
-            - NPM_TOKEN
-            # Pushing tags to Git
-            - GH_TOKEN
+  publish:
+    requires: [ main ]
+    template: screwdriver-cd/semantic-release
+    secrets:
+      # Publishing to NPM
+      - NPM_TOKEN
+      # Pushing tags to Git
+      - GH_TOKEN
