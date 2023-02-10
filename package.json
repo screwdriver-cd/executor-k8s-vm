@@ -5,15 +5,14 @@
     "main": "index.js",
     "scripts": {
         "pretest": "eslint .",
-        "test": "nyc --report-dir ./artifacts/coverage --reporter=lcov mocha --reporter mocha-multi-reporters --reporter-options configFile=./mocha.config.json --recursive --timeout 4000 --retries 1 --exit --allow-uncaught true --color true",
-        "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+        "test": "nyc --report-dir ./artifacts/coverage --reporter=lcov mocha --reporter mocha-multi-reporters --reporter-options configFile=./mocha.config.json --recursive --timeout 4000 --retries 1 --exit --allow-uncaught true --color true"
     },
     "engines": {
         "node": ">=6.0.0"
     },
     "repository": {
         "type": "git",
-        "url": "git@github.com:screwdriver-cd/executor-k8s-vm.git"
+        "url": "git+https://github.com/screwdriver-cd/executor-k8s-vm.git"
     },
     "homepage": "https://github.com/screwdriver-cd/executor-k8s-vm",
     "bugs": "https://github.com/screwdriver-cd/executor-k8s-vm/issues",
