@@ -1,6 +1,6 @@
 {
     "name": "screwdriver-executor-k8s-vm",
-    "version": "4.0.0",
+    "version": "5.0.0",
     "description": "Kubernetes VM Executor plugin for Screwdriver",
     "main": "index.js",
     "scripts": {
@@ -57,8 +57,8 @@
         "lodash": "^4.17.11",
         "randomstring": "^1.1.5",
         "requestretry": "^4.0.0",
-        "screwdriver-data-schema": "^23.0.4",
-        "screwdriver-executor-base": "^9.0.0",
+        "screwdriver-data-schema": "^24.0.0",
+        "screwdriver-executor-base": "^10.0.0",
         "tinytim": "^0.1.1"
     }
 }
